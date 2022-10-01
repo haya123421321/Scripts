@@ -19,7 +19,7 @@ def daily():
     Tepz2 = {"authorization": "OTM0MTAzNTkzNDQ1ODg4MDIw.YerOQA.31UyvMliNoOZEQncN808P2llwuo"}
     Tayyab = {"authorization": "NTU0MDU2NzQyMjA0NjA0NDU2.Yk8VoQ.5Y7E0GnnEFscJkbIzoMHwgSwxLc"}
       
-    data = {"content": "pls daily", "tts": "false"}
+    data = {"content": "/daily", "tts": "false"}
 
     requests.post(url, data=data, headers=Tepz)
     requests.post(url, data=data, headers=Tepz2)
