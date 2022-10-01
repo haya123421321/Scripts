@@ -1,4 +1,4 @@
-from requests import get
+from requests import Session
 from sys import argv
 from os import makedirs, chdir
 from bs4 import BeautifulSoup
@@ -14,8 +14,9 @@ if result == False:
 else:
     pass
 
+s = Session()
 url = f"https://readmanganato.com/manga-{argv[1]}/chapter-{argv[2]}"
-r = get(url)
+r = s.get(url)
 r = BeautifulSoup(r.text, 'html.parser')
 
 links = r.find(class_="container-chapter-reader").find_all("img")
@@ -31,6 +32,6 @@ makedirs(argv[2])
 chdir(argv[2])
 
 for link,name in zip(links, range(len(links))):
-    r = get(link["src"], headers=headers)
+    r = s.get(link["src"], headers=headers)
     print(f"Downloading Picture: {str(name)}.jpg")
     open(str(name) + ".jpg", "wb").write(r.content)
