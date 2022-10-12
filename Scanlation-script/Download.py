@@ -13,7 +13,7 @@ if result == False:
     exit()
 else:
     pass
-url = "https://mangaesp.co/ver/la-piba-del-tinder/" + argv[1]
+url = "https://mangaesp.co/ver/the-girl-from-tinder/" + argv[1]
 
 
 r = get(url)
