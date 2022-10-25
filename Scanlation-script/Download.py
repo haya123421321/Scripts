@@ -6,10 +6,6 @@ from PIL import Image
 from queue import Queue
 from threading import Thread
 
-import datetime
-
-start_time = datetime.datetime.now()
-
 if len(argv) > 1:
     result = argv[1]
 else:
@@ -70,6 +66,3 @@ def download_all():
 download_all()
 
 print("Done!")
-
-end_time = datetime.datetime.now()
-print(end_time - start_time)
