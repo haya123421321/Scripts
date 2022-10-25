@@ -1,9 +1,12 @@
-from requests import Session
+from requests import get
 from sys import argv
 from os import makedirs, chdir
 from bs4 import BeautifulSoup
+from queue import Queue
+from threading import Thread
 
-if len(argv) > 2:
+
+if len(argv) > 1:
     result = argv[1]
 else:
     result = False
@@ -14,9 +17,10 @@ if result == False:
 else:
     pass
 
-s = Session()
+q = Queue()
+names = Queue()
 url = f"https://readmanganato.com/manga-{argv[1]}/chapter-{argv[2]}"
-r = s.get(url)
+r = get(url)
 r = BeautifulSoup(r.text, 'html.parser')
 
 links = r.find(class_="container-chapter-reader").find_all("img")
@@ -28,10 +32,28 @@ headers = {
 	"User-Agent" : "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36",
 }
 
+for url in links:
+    q.put(url["src"])
+for name in range(len(links)):
+    names.put(name)
+
+
+def downloadlink():
+    while not q.empty():
+        link = q.get()
+        name = names.get()
+        r = get(link, headers=headers)
+        print(f"Downloading Picture: {str(name)}.jpg")
+        open(str(name) + ".jpg", "wb").write(r.content)
+        q.task_done()
+
+def download_all():
+    for i in range(len(links)):
+        t_worker = Thread(target=downloadlink)
+        t_worker.start()
+    q.join()
+
 makedirs(argv[2])
 chdir(argv[2])
 
-for link,name in zip(links, range(len(links))):
-    r = s.get(link["src"], headers=headers)
-    print(f"Downloading Picture: {str(name)}.jpg")
-    open(str(name) + ".jpg", "wb").write(r.content)
+download_all()
