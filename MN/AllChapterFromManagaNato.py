@@ -1,7 +1,10 @@
-from requests import Session
+from requests import get
 from sys import argv
 from os import makedirs, chdir
 from bs4 import BeautifulSoup
+from queue import Queue
+from threading import Thread
+
 
 if len(argv) > 1:
     result = argv[1]
@@ -9,43 +12,63 @@ else:
     result = False
 
 if result == False:
-    print("Usage: python3 download.py <Id>")
+    print("Usage: python3 download.py <Id> <Chapter>")
     exit()
 else:
     pass
 
-s = Session()
 url = f"https://readmanganato.com/manga-{argv[1]}"
-r = s.get(url)
+r = get(url)
 r = BeautifulSoup(r.text, 'html.parser')
 
-chapters = r.find(class_="row-content-chapter").find_all("li")
+chapterss = r.find(class_="row-content-chapter").find_all("li")
 Title = r.find(class_="story-info-right").h1.text
+chapters = []
+for i in chapterss:
+    chapters.append(i.a["href"])
 
 makedirs(Title)
 chdir(Title)
 
 for i in chapters:
-    name = i.a["href"].split("/")[4].split("-")[1]
-    url = i.a["href"]
-    r = s.get(url)
+    name = i.split("/")[4].split("-")[1]
+    print(f"Downloading Chapter: {name}")
+    q = Queue()
+    names = Queue()
+    r = get(i)
     r = BeautifulSoup(r.text, 'html.parser')
-
-    links = r.find(class_="container-chapter-reader").find_all("img")
-    headers = {
-    	"DNT" : "1",
-    	"Referer" : "https://readmanganato.com/",
-    	"sec-ch-ua-mobile" : "?0",
-    	"sec-ch-ua-platform" : "Linux",
-    	"User-Agent" : "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36",
-    }
     
     makedirs(name)
     chdir(name)
-    print(f"Downloading Chapter: {name}")
 
-    for link,name in zip(links, range(len(links))):
-        r = s.get(link["src"], headers=headers)
-        open(str(name) + ".jpg", "wb").write(r.content)
+    links = r.find(class_="container-chapter-reader").find_all("img")
+    headers = {
+        "DNT" : "1",
+        "Referer" : "https://readmanganato.com/",
+        "sec-ch-ua-mobile" : "?0",
+        "sec-ch-ua-platform" : "Linux",
+        "User-Agent" : "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36",
+    }
+
+    for url in links:
+        q.put(url["src"])
+    for name in range(len(links)):
+        names.put(name)
+
+    def downloadlink():
+        while not q.empty():
+            link = q.get()
+            name = names.get()
+            r = get(link, headers=headers)
+            open(str(name) + ".jpg", "wb").write(r.content)
+            q.task_done()
+
+    def download_all():
+        for i in range(len(links)):
+            t_worker = Thread(target=downloadlink)
+            t_worker.start()
+        q.join()
+
+
+    download_all()
     chdir("..")
-
