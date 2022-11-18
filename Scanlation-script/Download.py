@@ -48,7 +48,7 @@ def downloadlink():
         if link.endswith("webp"):
             print(f"Downloading Picture: {str(name)}.jpg")
             open(str(name) + ".webp", "wb").write(r.content)
-            Image.open(str(name) + ".webp").convert("RGB").save(str(name) + ".jpg")
+            Image.open(str(name) + ".webp").save(str(name) + ".jpg")
             remove(str(name) + ".webp")
 
         elif link.endswith("jpg"):
