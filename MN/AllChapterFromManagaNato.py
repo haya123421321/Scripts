@@ -4,7 +4,7 @@ from os import makedirs, chdir
 from bs4 import BeautifulSoup
 from queue import Queue
 from threading import Thread
-
+import shutil
 
 if len(argv) > 1:
     result = argv[1]
@@ -12,7 +12,7 @@ else:
     result = False
 
 if result == False:
-    print("Usage: python3 download.py <Id> <Chapter>")
+    print("Usage: python3 download.py <Id>")
     exit()
 else:
     pass
@@ -26,20 +26,21 @@ Title = r.find(class_="story-info-right").h1.text
 chapters = []
 for i in chapterss:
     chapters.append(i.a["href"])
+chapters = chapters[::-1]
 
 makedirs(Title)
 chdir(Title)
 
 for i in chapters:
-    name = i.split("/")[4].split("-")[1]
-    print(f"Downloading Chapter: {name}")
+    chapter_name  = Title + " " + i.split("/")[4].split("-")[1]
+    print(f"Downloading Chapter: {chapter_name }")
     q = Queue()
     names = Queue()
     r = get(i)
     r = BeautifulSoup(r.text, 'html.parser')
     
-    makedirs(name)
-    chdir(name)
+    makedirs(chapter_name)
+    chdir(chapter_name)
 
     links = r.find(class_="container-chapter-reader").find_all("img")
     headers = {
@@ -64,7 +65,7 @@ for i in chapters:
             q.task_done()
 
     def download_all():
-        for i in range(len(links)):
+        for i in range(10):
             t_worker = Thread(target=downloadlink)
             t_worker.start()
         q.join()
@@ -72,3 +73,5 @@ for i in chapters:
 
     download_all()
     chdir("..")
+    shutil.make_archive(chapter_name, "zip", chapter_name)
+    shutil.rmtree(chapter_name)
