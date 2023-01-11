@@ -4,6 +4,7 @@ from os import makedirs, chdir
 from bs4 import BeautifulSoup
 from queue import Queue
 from threading import Thread
+from time import sleep
 import shutil
 
 if len(argv) > 1:
@@ -75,3 +76,4 @@ for i in chapters:
     chdir("..")
     shutil.make_archive(chapter_name, "zip", chapter_name)
     shutil.rmtree(chapter_name)
+    sleep(0.5)
