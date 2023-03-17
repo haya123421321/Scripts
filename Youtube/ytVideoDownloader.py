@@ -28,7 +28,9 @@ V.join()
 audio = ffmpeg.input(argv[2] + "/" + "audio.mp3")
 video = ffmpeg.input(argv[2] + "/" + "video.mp4")
 
-ffmpeg.output(audio, video, argv[2] + "/" + str(yt.title) + ".mp4").run(overwrite_output=True)
-
+try:
+    ffmpeg.output(audio, video, argv[2] + "/" + str(yt.title) + ".mp4").run(overwrite_output=True)
+except:
+    print("Try going to the scripts folder")
 remove(argv[2] + "/" + "audio.mp3")
 remove(argv[2] + "/" + "video.mp4")
