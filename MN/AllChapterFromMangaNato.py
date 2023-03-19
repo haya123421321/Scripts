@@ -1,6 +1,6 @@
 from requests import get
 from sys import argv
-from os import makedirs, chdir
+from os import makedirs, chdir, system, name
 from bs4 import BeautifulSoup
 from queue import Queue
 from threading import Thread
@@ -26,17 +26,27 @@ search_parser.add_argument("--search")
 search_parser.add_argument("--id")
 
 args = search_parser.parse_args()
+page = 1
 
-if args.search is not None:
+def cls():
+    system('cls' if name=='nt' else 'clear')
+
+while args.search is not None:
+    cls()
     search = args.search.replace(" ", "_")
-    r = get("https://manganato.com/search/story/" + search)
+    url = "https://manganato.com/search/story/" + search + "?page=" + str(page)
+    r = get(url)
     r = BeautifulSoup(r.text, 'html.parser')
 
     results = r.find(class_="panel-search-story").find_all("div")
 
     titles = []
     urls = []
-
+    try:
+        pages = r.find(class_="page-blue page-last").text.strip("LAST()")
+    except:
+        pages = "1"
+    print(f"{page}/{pages}")
     for result in results:
         titles.append(result.h3.text.strip())
         urls.append(result.a["href"])
@@ -45,13 +55,25 @@ if args.search is not None:
     urls = list(dict.fromkeys(urls))
 
     for i,title,url in zip(range(len(titles)), titles, urls):
-        menu = str(i) + "  " + title
+        menu = "   " + str(i) + "  " + title
         print(menu)
 
-    Value_number = input()
+    Value_number = input("\n>> ")
+    if Value_number == "n":
+        if str(page) != pages:
+            page = int(page) + 1    
+        else:
+            pass            
+    elif Value_number == "p":
+        if str(page) != "1":
+            page = int(page) - 1    
+        else:
+            pass
+    else:
+        url = urls[int(Value_number)]
+        args.search = None
 
-    url = urls[int(Value_number)]
-elif args.id is not None:
+if args.id is not None:
     url = f"https://chapmanganato.com/manga-{args.id}"
 
 r = get(url)
@@ -70,7 +92,7 @@ except:
     Title = input(f"The folder and files can't be named {Title} please choose another name: ")
     makedirs(Title)
 chdir(Title)
-
+cls()
 for i in chapters:
     chapter_name  = Title + " " + i.split("/")[4].split("-")[1]
     print(f"Downloading Chapter: {chapter_name }")
