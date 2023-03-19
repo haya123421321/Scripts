@@ -4,7 +4,7 @@ from os import makedirs, chdir
 from bs4 import BeautifulSoup
 from queue import Queue
 from threading import Thread
-
+import shutil
 
 if len(argv) > 1:
     result = argv[1]
@@ -37,6 +37,7 @@ for url in links:
 for name in range(len(links)):
     names.put(name)
 
+Title = r.find(class_="panel-chapter-info-top").h1.text.split(":")[0]
 
 def downloadlink():
     while not q.empty():
@@ -48,12 +49,14 @@ def downloadlink():
         q.task_done()
 
 def download_all():
-    for i in range(len(links)):
+    for i in range(10):
         t_worker = Thread(target=downloadlink)
         t_worker.start()
     q.join()
 
-makedirs(argv[2])
-chdir(argv[2])
-
+makedirs(Title)
+chdir(Title)
 download_all()
+chdir("..")
+shutil.make_archive(Title, "zip", Title)
+shutil.rmtree(Title)
