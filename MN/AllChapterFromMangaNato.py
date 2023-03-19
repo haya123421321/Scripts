@@ -6,6 +6,7 @@ from queue import Queue
 from threading import Thread
 from time import sleep
 import shutil
+import argparse
 
 if len(argv) > 1:
     result = argv[1]
@@ -13,12 +14,46 @@ else:
     result = False
 
 if result == False:
-    print("Usage: python3 download.py <Id>")
+    print("Usage: python3 script.py --search <name> --id <Id>")
+    print("You can find the ID in the url")
     exit()
 else:
     pass
 
-url = f"https://readmanganato.com/manga-{argv[1]}"
+search_parser = argparse.ArgumentParser()
+
+search_parser.add_argument("--search")
+search_parser.add_argument("--id")
+
+args = search_parser.parse_args()
+
+if args.search is not None:
+    search = args.search.replace(" ", "_")
+    r = get("https://manganato.com/search/story/" + search)
+    r = BeautifulSoup(r.text, 'html.parser')
+
+    results = r.find(class_="panel-search-story").find_all("div")
+
+    titles = []
+    urls = []
+
+    for result in results:
+        titles.append(result.h3.text.strip())
+        urls.append(result.a["href"])
+
+    titles = list(dict.fromkeys(titles))
+    urls = list(dict.fromkeys(urls))
+
+    for i,title,url in zip(range(len(titles)), titles, urls):
+        menu = str(i) + "  " + title
+        print(menu)
+
+    Value_number = input()
+
+    url = urls[int(Value_number)]
+elif args.id is not None:
+    url = f"https://chapmanganato.com/manga-{args.id}"
+
 r = get(url)
 r = BeautifulSoup(r.text, 'html.parser')
 
@@ -29,7 +64,11 @@ for i in chapterss:
     chapters.append(i.a["href"])
 chapters = chapters[::-1]
 
-makedirs(Title)
+try:
+    makedirs(Title)
+except:
+    Title = input(f"The folder and files can't be named {Title} please choose another name: ")
+    makedirs(Title)
 chdir(Title)
 
 for i in chapters:
