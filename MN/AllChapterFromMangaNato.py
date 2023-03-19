@@ -38,8 +38,10 @@ while args.search is not None:
     r = get(url)
     r = BeautifulSoup(r.text, 'html.parser')
 
-    results = r.find(class_="panel-search-story").find_all("div")
-
+    try:
+        results = r.find(class_="panel-search-story").find_all("div")
+    except:
+        print("cant find the specified manga/manhwa/manhua")
     titles = []
     urls = []
     try:
@@ -57,6 +59,8 @@ while args.search is not None:
     for i,title,url in zip(range(len(titles)), titles, urls):
         menu = "   " + str(i) + "  " + title
         print(menu)
+    print("\n Next page = n")
+    print(" Previous page = p")        
 
     Value_number = input("\n>> ")
     if Value_number == "n":
