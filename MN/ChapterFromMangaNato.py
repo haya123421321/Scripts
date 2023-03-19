@@ -49,7 +49,7 @@ def downloadlink():
         q.task_done()
 
 def download_all():
-    for i in range(10):
+    for i in range(15):
         t_worker = Thread(target=downloadlink)
         t_worker.start()
     q.join()
