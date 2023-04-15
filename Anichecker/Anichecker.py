@@ -21,7 +21,7 @@ else:
 options = ChromeOptions()
 options.headless = True
 options.add_experimental_option("excludeSwitches", ["enable-logging"])
-print(desktop)
+
 driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
 
 urls = open("urls.txt").read().split()
