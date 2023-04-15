@@ -51,6 +51,5 @@ for url in urls:
 	conn.commit()
 
 
-conn.commit()
 conn.close()
 driver.close()
