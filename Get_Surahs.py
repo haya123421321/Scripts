@@ -9,7 +9,8 @@ for i,number in zip(url,range(1, len(url))):
 	r = s.get(i)
 	soup = BeautifulSoup(r.text, "html.parser")
 	names = soup.find(class_="et_pb_row et_pb_row_2").find_all(class_="container-2")
-	f.write("\n\n" + str(number) + "\n")
+	f.write("\n\n" + str(number) + " " + i.split("/")[3] + "\n")
 	for name in names:
 		text = name.find(class_="translation-style transliteration-style").text
 		f.write(text + "\n")
+	print(i.split("/")[3])
