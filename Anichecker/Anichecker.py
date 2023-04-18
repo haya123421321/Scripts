@@ -5,7 +5,9 @@ from selenium.webdriver import ChromeOptions
 from webdriver_manager.chrome import ChromeDriverManager
 import os
 
-conn = sqlite3.connect("a.db")
+dir_path = os.path.dirname(__file__)
+
+conn = sqlite3.connect(dir_path + "/" + "a.db")
 c = conn.cursor()
 
 try:
@@ -18,13 +20,14 @@ if os.name == "nt":
 	desktop = os.path.join(os.path.join(os.environ['USERPROFILE']), 'Desktop') 
 else:
 	desktop = os.path.join(os.path.join(os.path.expanduser('~')), 'Desktop') 
+
 options = ChromeOptions()
 options.headless = True
 options.add_experimental_option("excludeSwitches", ["enable-logging"])
 
 driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
 
-urls = open("urls.txt").read().split()
+urls = open(dir_path + "/" "urls.txt").read().split()
 file_path = f"{desktop}\\Updated.txt".replace("\\", "\\")
 
 for url in urls:
@@ -42,7 +45,7 @@ for url in urls:
 		print(f"{name} Added to the DB")
 		continue
 	if eps > previous_ep:
-		open(file_path, "a").write(f"{name} Ep {eps}    {url}")
+		open(file_path, "a").write(f"{name} Ep {eps}    {url}\n")
 		c.execute('UPDATE an SET ep = {} WHERE url = "{}"'.format(eps, url))
 		conn.commit()
 		print(f"{name} Updated to {eps}")
