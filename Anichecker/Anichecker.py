@@ -35,6 +35,8 @@ for url in urls:
 	soup = BeautifulSoup(driver.page_source, 'html.parser')
 	eps = len(soup.find(class_="episodes-ul").find_all("a"))
 	name = soup.find(class_="film-name dynamic-name").text
+	eps = soup.find(class_="episodes-ul").find_all("a")
+	new_ep = eps[-1]["href"]
 	c.execute('SELECT * FROM an WHERE url="{}"'.format(url))
 	conn.commit()
 	try:
@@ -45,7 +47,7 @@ for url in urls:
 		print(f"{name} Added to the DB")
 		continue
 	if eps > previous_ep:
-		open(file_path, "a").write(f"{name} Ep {eps}    {url}\n")
+		open(file_path, "a").write(f"{name} Ep {eps} https://9animetv.to{new_ep}\n")
 		c.execute('UPDATE an SET ep = {} WHERE url = "{}"'.format(eps, url))
 		conn.commit()
 		print(f"{name} Updated to {eps}")
