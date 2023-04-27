@@ -48,21 +48,47 @@ while args.search is not None:
         pages = r.find(class_="page-blue page-last").text.strip("LAST()")
     except:
         pages = "1"
+    
     print(f"{page}/{pages}")
+    
     for result in results:
         titles.append(result.h3.text.strip())
         urls.append(result.a["href"])
 
     titles = list(dict.fromkeys(titles))
     urls = list(dict.fromkeys(urls))
-
+    biggest_title = 0
+    
+    for title in titles:
+        if len(title) > biggest_title:
+            biggest_title = len(title)
+        else:
+            pass
+    t = 1
     for i,title,url in zip(range(len(titles)), titles, urls):
-        menu = "   " + str(i) + "  " + title
-        print(menu)
-    print("\n Next page = n")
-    print(" Previous page = p")        
+        if i < 10:
+            minus = "------"
+            space = "  "
+        else:
+            minus = "-----"
+            space = " "
+        minuses = "-"*biggest_title + "-"*len(str(i)) + minus + "-"
+        spaces_left = len(minuses) - len(title) - len(str(i)) - len(minus) - 1
+        menu = space + str(i) + " | " + title + " "*spaces_left + " |"
 
-    Value_number = input("\n>> ")
+        while t == 1:
+            print(minuses)
+            spaces_left2 = len(minuses) - len(" ID | Title") - 2
+            print(" ID | Title" + " "*spaces_left2 + " |")
+            print(minuses)
+            t = 0
+        print(menu)
+        print(minuses)
+
+    print("\nNext page = n")
+    print("Previous page = p")        
+    
+    Value_number = input("\nType id: ")
     if Value_number == "n":
         if str(page) != pages:
             page = int(page) + 1    
