@@ -33,7 +33,6 @@ file_path = f"{desktop}\\Updated.txt".replace("\\", "\\")
 for url in urls:
 	r = driver.get(url)
 	soup = BeautifulSoup(driver.page_source, 'html.parser')
-	eps = len(soup.find(class_="episodes-ul").find_all("a"))
 	name = soup.find(class_="film-name dynamic-name").text
 	eps = soup.find(class_="episodes-ul").find_all("a")
 	new_ep = eps[-1]["href"]
@@ -42,13 +41,13 @@ for url in urls:
 	try:
 		previous_ep = c.fetchone()[2]
 	except:
-		c.execute('INSERT INTO an VALUES ("{}", "{}", {})'.format(name.replace("'", "\\'"), url, eps))
+		c.execute('INSERT INTO an VALUES ("{}", "{}", {})'.format(name.replace("'", "\\'"), url, len(eps)))
 		conn.commit()
 		print(f"{name} Added to the DB")
 		continue
-	if eps > previous_ep:
-		open(file_path, "a").write(f"{name} Ep {eps} https://9animetv.to{new_ep}\n")
-		c.execute('UPDATE an SET ep = {} WHERE url = "{}"'.format(eps, url))
+	if len(eps) > previous_ep:
+		open(file_path, "a").write(f"{name} Ep {len(eps)} https://9animetv.to{new_ep}\n")
+		c.execute('UPDATE an SET ep = {} WHERE url = "{}"'.format(len(eps), url))
 		conn.commit()
 		print(f"{name} Updated to {eps}")
 	else:
