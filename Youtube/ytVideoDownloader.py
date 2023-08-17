@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 from pytube import YouTube
 from sys import argv
 import ffmpeg
