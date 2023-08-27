@@ -3,7 +3,6 @@ from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver import ChromeOptions
 from selenium.webdriver.chrome.service import Service 
-from webdriver_manager.chrome import ChromeDriverManager
 import os
 
 dir_path = os.path.dirname(__file__)
@@ -25,7 +24,7 @@ else:
 options = ChromeOptions()
 options.add_argument("--headless=new")
 
-driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+driver = webdriver.Chrome(options=options)
 
 urls = open(dir_path + "/" "urls.txt").read().split()
 
