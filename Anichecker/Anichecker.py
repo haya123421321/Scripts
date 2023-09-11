@@ -47,7 +47,7 @@ for url in urls:
 		open(file_path, "a").write(f"{name}  Ep {len(eps)}  https://9animetv.to{new_ep}\n")
 		c.execute('UPDATE an SET ep = {} WHERE url = "{}"'.format(len(eps), url))
 		conn.commit()
-		print(f"{name} Updated to {eps}")
+		print(f"{name} Updated to Ep {len(eps)}")
 	else:
 		pass
 
