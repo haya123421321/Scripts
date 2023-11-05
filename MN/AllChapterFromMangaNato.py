@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-from requests import get
+from requests import get, Session
 from sys import argv
 from os import makedirs, chdir, system, name
 from bs4 import BeautifulSoup
@@ -30,14 +30,16 @@ search_parser.add_argument("--id")
 args = search_parser.parse_args()
 page = 1
 
+s = Session()
+
 def cls():
     system('cls' if name=='nt' else 'clear')
 
+
 while args.search is not None:
-    cls()
     search = args.search.replace(" ", "_")
     url = "https://manganato.com/search/story/" + search + "?page=" + str(page)
-    r = get(url)
+    r = s.get(url)
     r = BeautifulSoup(r.text, 'html.parser')
 
     try:
@@ -108,7 +110,7 @@ while args.search is not None:
 if args.id is not None:
     url = f"https://chapmanganato.com/manga-{args.id}"
 
-r = get(url)
+r = s.get(url)
 r = BeautifulSoup(r.text, 'html.parser')
 
 chapterss = r.find(class_="row-content-chapter").find_all("li")
@@ -124,13 +126,20 @@ except:
     Title = input(f"The folder and files can't be named {Title} please choose another name: ")
     makedirs(Title)
 chdir(Title)
-cls()
-for i in chapters:
-    chapter_name  = Title + " " + i.split("/")[4].split("-")[1]
-    print(f"Downloading Chapter: {chapter_name }")
+
+Total_chapters = len(chapterss)
+num_digits = len(str(Total_chapters))
+
+for index,i in enumerate(chapters, start=1):
+    chapter_name  = Title + " " + i.split("/")[4].split("-")[1].zfill(num_digits)
+    progress = index / Total_chapters
+    bar_length = int(40 * progress)
+    bar = "█" * bar_length + '-' * (40 - bar_length)
+    print(f'[{bar}] {index}/{Total_chapters}', end='\r')
+
     q = Queue()
     names = Queue()
-    r = get(i)
+    r = s.get(i)
     r = BeautifulSoup(r.text, 'html.parser')
     
     makedirs(chapter_name)
@@ -154,12 +163,12 @@ for i in chapters:
         while not q.empty():
             link = q.get()
             name = names.get()
-            r = get(link, headers=headers)
+            r = s.get(link, headers=headers)
             open(str(name) + ".jpg", "wb").write(r.content)
             q.task_done()
 
     def download_all():
-        for i in range(15):
+        for i in range(20):
             t_worker = Thread(target=downloadlink)
             t_worker.start()
         q.join()
@@ -169,4 +178,5 @@ for i in chapters:
     chdir("..")
     shutil.make_archive(chapter_name, "zip", chapter_name)
     shutil.rmtree(chapter_name)
-    sleep(0.5)
+
+print()
