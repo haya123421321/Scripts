@@ -121,10 +121,10 @@ for i in chapterss:
 chapters = chapters[::-1]
 
 try:
-    makedirs(Title)
+    makedirs(Title, exist_ok=True)
 except:
     Title = input(f"The folder and files can't be named {Title} please choose another name: ")
-    makedirs(Title)
+    makedirs(Title, exist_ok=True)
 chdir(Title)
 
 Total_chapters = len(chapterss)
@@ -142,7 +142,7 @@ for index,i in enumerate(chapters, start=1):
     r = s.get(i)
     r = BeautifulSoup(r.text, 'html.parser')
     
-    makedirs(chapter_name)
+    makedirs(chapter_name, exist_ok=True)
     chdir(chapter_name)
 
     links = r.find(class_="container-chapter-reader").find_all("img")
