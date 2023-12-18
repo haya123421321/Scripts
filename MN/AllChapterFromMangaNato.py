@@ -3,6 +3,7 @@
 from requests import get, Session
 from sys import argv
 from os import makedirs, chdir, system, name
+from os.path import isfile
 from bs4 import BeautifulSoup
 from queue import Queue
 from threading import Thread
@@ -130,6 +131,11 @@ num_digits = len(str(Total_chapters))
 
 for index,i in enumerate(chapters, start=1):
     chapter_name  = Title + " " + i.split("/")[4].split("-")[1].zfill(num_digits)
+    if isfile(chapter_name + ".zip"):
+        continue
+    else:
+        pass
+
     progress = index / Total_chapters
     bar_length = int(40 * progress)
     bar = "█" * bar_length + '-' * (40 - bar_length)
