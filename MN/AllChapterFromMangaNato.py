@@ -10,21 +10,9 @@ from time import sleep
 import shutil
 import argparse
 
-if len(argv) > 1:
-    result = argv[1]
-else:
-    result = False
-
-if result == False:
-    print("Usage: python3 script.py --search <name> --id <Id>")
-    print("You can find the ID in the url")
-    exit()
-else:
-    pass
 
 search_parser = argparse.ArgumentParser()
 
-search_parser.add_argument("--search")
 search_parser.add_argument("--id")
 
 args = search_parser.parse_args()
@@ -32,8 +20,11 @@ page = 1
 
 s = Session()
 
-while args.search is not None:
-    search = args.search.replace(" ", "_")
+if args.id is not None:
+    url = f"https://chapmanganato.com/manga-{args.id}"
+else:
+    search = input("Search: ")
+    search = search.replace(" ", "_")
     url = "https://manganato.com/search/story/" + search + "?page=" + str(page)
     r = s.get(url)
     r = BeautifulSoup(r.text, 'html.parser')
@@ -88,10 +79,10 @@ while args.search is not None:
     print("\nNext page = n")
     print("Previous page = p")        
     
-    Value_number = input("\nType id: ")
+    Value_number = input("\nSelect the series by ID: ")
     if Value_number == "n":
         if str(page) != pages:
-            page = int(page) + 1    
+            page = int(page) + 1
         else:
             pass            
     elif Value_number == "p":
@@ -102,9 +93,7 @@ while args.search is not None:
     else:
         url = urls[int(Value_number)]
         args.search = None
-
-if args.id is not None:
-    url = f"https://chapmanganato.com/manga-{args.id}"
+    all_or_specific = input("Type the chapter number or press enter for all: ").split("-")
 
 r = s.get(url)
 r = BeautifulSoup(r.text, 'html.parser')
@@ -116,6 +105,19 @@ for i in chapterss:
     chapters.append(i.a["href"])
 chapters = chapters[::-1]
 
+chap_nums = [url.split("-")[2] for url in chapters]
+
+try:
+    if len(all_or_specific) == 2:
+        chapters = chapters[chap_nums.index(all_or_specific[0]):chap_nums.index(all_or_specific[1]) + 1]
+    elif all_or_specific[0] == "":
+        chapters = chapters
+    elif len(all_or_specific) == 1:
+        chapters = chapters[chap_nums.index(all_or_specific[0])].split()
+except:
+    print(f"The Chapter Doesn't Exist: ")
+    exit
+
 try:
     makedirs(Title, exist_ok=True)
 except:
@@ -123,7 +125,7 @@ except:
     makedirs(Title, exist_ok=True)
 chdir(Title)
 
-Total_chapters = len(chapterss)
+Total_chapters = len(chapters)
 num_digits = len(str(Total_chapters))
 
 for index,i in enumerate(chapters, start=1):
@@ -159,7 +161,7 @@ for index,i in enumerate(chapters, start=1):
         while not q.empty():
             link = q.get()
             name = names.get()
-            r = s.get(link, headers=headers)
+            r = s.get(link, headers=headers, stream=True)
             open(str(name) + ".jpg", "wb").write(r.content)
             q.task_done()
 
