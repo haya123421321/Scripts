@@ -32,10 +32,6 @@ page = 1
 
 s = Session()
 
-def cls():
-    system('cls' if name=='nt' else 'clear')
-
-
 while args.search is not None:
     search = args.search.replace(" ", "_")
     url = "https://manganato.com/search/story/" + search + "?page=" + str(page)
