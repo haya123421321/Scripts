@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 from pynput import mouse
 
 def on_click(x, y, button, pressed):
