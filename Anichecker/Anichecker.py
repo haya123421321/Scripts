@@ -25,7 +25,8 @@ options.add_argument("--headless=new")
 
 driver = webdriver.Chrome(options=options)
 
-urls = open(dir_path + "/" "urls.txt").read().split()
+urls_file = open(dir_path + "/" "urls.txt")
+urls = urls_file.read().split("\n")
 
 def animetv(url):
 	r = driver.get(url)
@@ -67,6 +68,14 @@ for url in urls:
 		print(f"{name} Updated to Ep {len(eps)}")
 	else:
 		pass
+
+	if status == "Finished Airing":
+		urls = [line for line in urls if line != url]
+		with open(dir_path + "/" "urls.txt", "w") as urls_file:
+			urls_file.write("\n".join(urls))
+		c.execute('DELETE FROM an WHERE url = "{}"'.format(url))
+		conn.commit()
+
 
 driver.close()
 conn.close()
