@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 from pynput import mouse
 import argparse
 import time
