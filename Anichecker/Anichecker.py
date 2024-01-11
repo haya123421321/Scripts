@@ -25,6 +25,11 @@ options.add_argument("--headless=new")
 
 driver = webdriver.Chrome(options=options)
 
+if os.path.isfile(dir_path + "/" "urls.txt"):
+	pass
+else:
+	open(dir_path + "/" "urls.txt", "w")
+
 urls_file = open(dir_path + "/" "urls.txt")
 urls = urls_file.read().split("\n")
 
