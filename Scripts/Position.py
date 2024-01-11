@@ -40,7 +40,6 @@ except KeyboardInterrupt:
             file.write(f"positions = {positions}\n")
 
             if args.r:
-                seconds.pop(0)
                 file.write(f"seconds = {seconds}")
 
             file.write("\n\nwhile True:\n")
