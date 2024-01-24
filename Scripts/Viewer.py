@@ -11,7 +11,6 @@ def scroll(canvas, event):
 
 def space_scroll(canvas, event):
     canvas.yview_scroll(8, "units")
-    return "break"
 
 def shift_space_scroll(canvas, event):
     canvas.yview_scroll(-8, "units")  
@@ -86,6 +85,7 @@ def show_images(canvas, loaded_images, total_image_height):
         y_offset += img.height + 1 * 5
 
     scrollbar(canvas, total_image_height)
+    canvas.focus_set()
 
 def load_chapter(root, canvas, files, selected_index):
     global current_file_index
