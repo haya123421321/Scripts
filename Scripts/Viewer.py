@@ -11,6 +11,7 @@ def scroll(canvas, event):
 
 def space_scroll(canvas, event):
     canvas.yview_scroll(8, "units")
+    return "break"
 
 def shift_space_scroll(canvas, event):
     canvas.yview_scroll(-8, "units")  
@@ -26,6 +27,26 @@ def on_canvas_configure(canvas, loaded_images, total_image_height):
 
 def get_display_size(img):
     return img.width, img.height
+
+def scrollbar(canvas, total_image_height):
+    canvas.config(scrollregion=(0, 0, canvas.winfo_width(), total_image_height))
+    scrollbar = tk.Scrollbar(canvas, orient="vertical", command=canvas.yview)
+    scrollbar.pack(side="right", fill="y")
+    canvas.configure(yscrollcommand=scrollbar.set)
+    canvas.yview_moveto(0)
+
+def toggle_listbox():
+    new_x = my_listbox.winfo_reqwidth() + my_listbox.winfo_reqwidth() / 2
+    if my_listbox.winfo_ismapped():
+        my_listbox.place_forget()
+    else:
+        my_listbox.place(x=new_x)
+
+def on_listbox_select(event):
+    selected_index = my_listbox.curselection()
+    if selected_index:
+        selected_index = int(selected_index[0])
+        load_chapter(root, canvas, files, selected_index)
 
 def natural_sort_key(s):
     return [int(text) if text.isdigit() else text.lower() for text in re.split('([0-9]+)', s)]
@@ -63,29 +84,28 @@ def show_images(canvas, loaded_images, total_image_height):
         label.image = photo
         canvas.create_image(canvas.winfo_width() // 2, y_offset + img.height // 2, anchor=tk.CENTER, image=photo)
         y_offset += img.height + 1 * 5
-    canvas.config(scrollregion=(0, 0, canvas.winfo_width(), total_image_height))
-    scrollbar = tk.Scrollbar(canvas, orient="vertical", command=canvas.yview)
-    scrollbar.pack(side="right", fill="y")
-    canvas.configure(yscrollcommand=scrollbar.set)
-    canvas.yview_moveto(0)
+
+    scrollbar(canvas, total_image_height)
+
+def load_chapter(root, canvas, files, selected_index):
+    global current_file_index
+    current_file_index = selected_index
+    zip_file_path = files[current_file_index] + ".zip"
+    image_files = load_images_from_zip(zip_file_path)
+    loaded_images, total_image_height = load_all_images(zip_file_path, image_files)
+    on_canvas_configure(canvas, loaded_images, total_image_height)
+    root.title(f"Comic Book Reader - {zip_file_path}")
+
 
 def next_file(root, canvas, files):
     global current_file_index
     current_file_index = (current_file_index + 1) % len(files)
-    zip_file_path = files[current_file_index] + ".zip"
-    image_files = load_images_from_zip(zip_file_path)
-    loaded_images, total_image_height = load_all_images(zip_file_path, image_files)
-    on_canvas_configure(canvas, loaded_images, total_image_height)
-    root.title(f"Comic Book Reader - {zip_file_path}")
+    load_chapter(root, canvas, files, current_file_index)
 
 def previous_file(root, canvas, files):
     global current_file_index
     current_file_index = (current_file_index - 1) % len(files)
-    zip_file_path = files[current_file_index] + ".zip"
-    image_files = load_images_from_zip(zip_file_path)
-    loaded_images, total_image_height = load_all_images(zip_file_path, image_files)
-    on_canvas_configure(canvas, loaded_images, total_image_height)
-    root.title(f"Comic Book Reader - {zip_file_path}")
+    load_chapter(root, canvas, files, current_file_index)
 
 
 if len(sys.argv) != 2:
@@ -108,7 +128,15 @@ root.attributes('-zoomed', True)
 canvas = tk.Canvas(root, bg="#1E1E1E", highlightthickness=0)
 canvas.pack(fill=tk.BOTH, expand=True)
 
+my_listbox = tk.Listbox(root, selectmode=tk.SINGLE)
+
+for file in files:
+    my_listbox.insert(tk.END, file)
+
+my_listbox.config(height=my_listbox.size() if my_listbox.size() < 20 else 20, width=70)
+
 canvas.bind("<Configure>", lambda event: on_canvas_configure(canvas, loaded_images, total_image_height))
+my_listbox.bind('<<ListboxSelect>>', on_listbox_select)
 
 canvas.bind("<Button-4>", lambda event: scroll(canvas, event))  
 canvas.bind("<Button-5>", lambda event: scroll(canvas, event))  
@@ -118,6 +146,7 @@ root.bind("<Up>", lambda event: arrow_up_scroll(canvas, event))
 root.bind("<Down>", lambda event: arrow_down_scroll(canvas, event))  
 root.bind("n", lambda event: next_file(root, canvas, files))  
 root.bind("p", lambda event: previous_file(root, canvas, files))  
+root.bind("l", lambda event: toggle_listbox())
 
 
 image_files = load_images_from_zip(zip_file_path)
