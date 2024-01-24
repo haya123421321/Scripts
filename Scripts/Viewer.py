@@ -108,9 +108,6 @@ root.attributes('-zoomed', True)
 canvas = tk.Canvas(root, bg="#1E1E1E", highlightthickness=0)
 canvas.pack(fill=tk.BOTH, expand=True)
 
-#scrollbar = tk.Scrollbar(canvas, orient="vertical", command=canvas.yview)
-#scrollbar.pack(side="right", fill="y")
-
 canvas.bind("<Configure>", lambda event: on_canvas_configure(canvas, loaded_images, total_image_height))
 
 canvas.bind("<Button-4>", lambda event: scroll(canvas, event))  
