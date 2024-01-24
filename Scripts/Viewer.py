@@ -132,7 +132,7 @@ canvas.pack(fill=tk.BOTH, expand=True)
 my_listbox = tk.Listbox(root, selectmode=tk.SINGLE)
 
 for file in files:
-    my_listbox.insert(tk.END, file)
+    my_listbox.insert(tk.END, os.path.basename(file))
 
 my_listbox.config(height=my_listbox.size() if my_listbox.size() < 20 else 20, width=70)
 
