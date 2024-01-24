@@ -112,13 +112,14 @@ if len(sys.argv) != 2:
     print("Usage: python comic_reader.py <path_to_cbr_file>")
     sys.exit(1)
 
-file_directory = os.path.abspath(sys.argv[1])
-file_directory = os.path.dirname(file_directory)
+file_path = os.path.abspath(sys.argv[1])
+file_directory = os.path.dirname(file_path)
 files = os.listdir(file_directory)
+files = [file_directory + "/" + name for name in files]
 files = [name.replace(".zip", "") for name in files]
 files = sorted(files, key=natural_sort_key)
 
-current_file_index = files.index(os.path.basename(sys.argv[1]).replace(".zip", ""))
+current_file_index = files.index(file_path.replace(".zip", ""))
 
 zip_file_path = files[current_file_index] + ".zip"
 
