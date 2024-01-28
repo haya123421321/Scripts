@@ -172,7 +172,8 @@ for index,i in enumerate(chapters, start=1):
             q.task_done()
 
     def download_all():
-        for i in range(20):
+        num_threads = min(20, len(links))
+        for i in range(num_threads):
             t_worker = Thread(target=downloadlink)
             t_worker.start()
         q.join()
