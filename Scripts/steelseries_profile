@@ -1,0 +1,6 @@
+#!/bin/bash
+rivalcfg --strip-middle-color 000000
+rivalcfg --strip-bottom-color 000000
+rivalcfg --strip-top-color 000000
+rivalcfg -c 000000
+rivalcfg -s 800
