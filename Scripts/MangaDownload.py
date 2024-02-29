@@ -2,7 +2,7 @@
 
 from requests import get, Session
 from sys import argv
-from os import makedirs, chdir, system, name
+from os import makedirs, chdir
 from os.path import isfile
 from bs4 import BeautifulSoup
 from queue import Queue
@@ -101,6 +101,7 @@ r = BeautifulSoup(r.text, 'html.parser')
 
 chapterss = r.find(class_="row-content-chapter").find_all("li")
 Title = r.find(class_="story-info-right").h1.text
+Icon = r.find(class_="info-image").img["src"]
 chapters = []
 for i in chapterss:
     chapters.append(i.a["href"])
@@ -125,6 +126,8 @@ except:
     Title = input(f"The folder and files can't be named {Title} please choose another name: ")
     makedirs(Title, exist_ok=True)
 chdir(Title)
+r = s.get(Icon)
+open("icon.jpg", "wb").write(r.content)
 
 Total_chapters = len(chapters)
 num_digits = len(str(Total_chapters))
@@ -133,8 +136,6 @@ for index,i in enumerate(chapters, start=1):
     chapter_name  = Title + " " + i.split("/")[4].split("-")[1].zfill(num_digits)
     if isfile(chapter_name + ".zip"):
         continue
-    else:
-        pass
 
     progress = index / Total_chapters
     bar_length = int(40 * progress)
@@ -185,3 +186,5 @@ for index,i in enumerate(chapters, start=1):
     shutil.rmtree(chapter_name)
 
 print()
+
+
