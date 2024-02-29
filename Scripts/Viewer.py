@@ -4,7 +4,6 @@ import tkinter as tk
 from PIL import Image, ImageTk
 import zipfile
 import re
-import time
 
 def scroll(canvas, event):
     if event.num == 5:
