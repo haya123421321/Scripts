@@ -139,12 +139,13 @@ root.attributes('-zoomed', True)
 canvas = tk.Canvas(root, bg="#1E1E1E", highlightthickness=0)
 canvas.pack(fill=tk.BOTH, expand=True)
 
-my_listbox = tk.Listbox(root, selectmode=tk.SINGLE)
+my_listbox = tk.Listbox(root, selectmode=tk.SINGLE, selectbackground='lightblue', activestyle='none')
 
 for file in files:
     my_listbox.insert(tk.END, "Chapter " + os.path.basename(file).split()[-1])
 
 my_listbox.config(height=min(my_listbox.size(), 20), width=70)
+my_listbox.selection_set(current_file_index)
 
 canvas.bind("<Configure>", lambda event: on_canvas_configure(canvas, loaded_images, total_image_height))
 my_listbox.bind('<<ListboxSelect>>', on_listbox_select)
