@@ -41,7 +41,7 @@ def scrollbar(canvas, total_image_height):
     canvas.config(scrollregion=(0, 0, canvas.winfo_width(), total_image_height))
     scrollbar = tk.Scrollbar(canvas, orient="vertical", command=canvas.yview)
     scrollbar.pack(side="right", fill="y")
-    canvas.configure(yscrollcommand=scrollbar.set) # yscrollincrement = 10
+    canvas.configure(yscrollcommand=scrollbar.set)
     canvas.yview_moveto(0)
 
 def toggle_listbox():
@@ -145,6 +145,7 @@ for file in files:
     my_listbox.insert(tk.END, "Chapter " + os.path.basename(file).split()[-1])
 
 my_listbox.config(height=min(my_listbox.size(), 20), width=70)
+
 my_listbox.selection_set(current_file_index)
 
 canvas.bind("<Configure>", lambda event: on_canvas_configure(canvas, loaded_images, total_image_height))
