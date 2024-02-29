@@ -1,21 +1,29 @@
-#!/usr/bin/python3
-
 import os
 import sys
 import tkinter as tk
 from PIL import Image, ImageTk
 import zipfile
 import re
+import time
 
 def scroll(canvas, event):
-    direction = 1 if event.num == 5 else -1  
+    if event.num == 5:
+        direction = 1 
+    elif event.num == 4:
+        direction = -1
     canvas.yview_scroll(direction, "units")  
 
 def space_scroll(canvas, event):
-    canvas.yview_scroll(8, "units")
+    for _ in range(8):
+        canvas.yview_scroll(1, "units")
+        canvas.update()
+        root.after(10)
 
 def shift_space_scroll(canvas, event):
-    canvas.yview_scroll(-8, "units")  
+    for _ in range(8):
+        canvas.yview_scroll(-1, "units")
+        canvas.update()
+        root.after(10)
 
 def arrow_up_scroll(canvas, event):
     canvas.yview_scroll(-1, "units")  
@@ -33,7 +41,7 @@ def scrollbar(canvas, total_image_height):
     canvas.config(scrollregion=(0, 0, canvas.winfo_width(), total_image_height))
     scrollbar = tk.Scrollbar(canvas, orient="vertical", command=canvas.yview)
     scrollbar.pack(side="right", fill="y")
-    canvas.configure(yscrollcommand=scrollbar.set)
+    canvas.configure(yscrollcommand=scrollbar.set) # yscrollincrement = 10
     canvas.yview_moveto(0)
 
 def toggle_listbox():
@@ -134,9 +142,9 @@ canvas.pack(fill=tk.BOTH, expand=True)
 my_listbox = tk.Listbox(root, selectmode=tk.SINGLE)
 
 for file in files:
-    my_listbox.insert(tk.END, os.path.basename(file))
+    my_listbox.insert(tk.END, "Chapter " + os.path.basename(file).split()[-1])
 
-my_listbox.config(height=my_listbox.size() if my_listbox.size() < 20 else 20, width=70)
+my_listbox.config(height=min(my_listbox.size(), 20), width=70)
 
 canvas.bind("<Configure>", lambda event: on_canvas_configure(canvas, loaded_images, total_image_height))
 my_listbox.bind('<<ListboxSelect>>', on_listbox_select)
