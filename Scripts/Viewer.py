@@ -1,11 +1,10 @@
-#!/usr/bin/python3
-
 import os
 import sys
 import tkinter as tk
 from PIL import Image, ImageTk
 import zipfile
 import re
+import json
 
 def scroll(canvas, event):
     if event.num == 5:
@@ -45,14 +44,14 @@ def scrollbar(canvas, total_image_height):
     canvas.configure(yscrollcommand=scrollbar.set)
     canvas.yview_moveto(0)
 
-def toggle_listbox():
+def toggle_listbox(my_listbox):
     new_x = my_listbox.winfo_reqwidth()
     if my_listbox.winfo_ismapped():
         my_listbox.place_forget()
     else:
         my_listbox.place(x=new_x)
 
-def on_listbox_select(event):
+def on_listbox_select(my_listbox, files):
     selected_index = my_listbox.curselection()
     if selected_index:
         selected_index = int(selected_index[0])
@@ -105,7 +104,7 @@ def load_chapter(root, canvas, files, selected_index):
     image_files = load_images_from_zip(zip_file_path)
     loaded_images, total_image_height = load_all_images(zip_file_path, image_files)
     on_canvas_configure(canvas, loaded_images, total_image_height)
-    root.title(f"Comic Book Reader - {zip_file_path}")
+    root.title(f"Comic Book Reader - {os.path.basename(zip_file_path)}")
 
 
 def next_file(root, canvas, files):
@@ -118,55 +117,118 @@ def previous_file(root, canvas, files):
     current_file_index = (current_file_index - 1) % len(files)
     load_chapter(root, canvas, files, current_file_index)
 
-
-if len(sys.argv) != 2:
-    print("Usage: python comic_reader.py <path_to_cbr_file>")
-    sys.exit(1)
-
-file_path = os.path.abspath(sys.argv[1])
-file_directory = os.path.dirname(file_path)
-files = os.listdir(file_directory)
-files = [file_directory + "/" + name for name in files]
-files = [name.replace(".zip", "") for name in files]
-files = sorted(files, key=natural_sort_key)
-
-current_file_index = files.index(file_path.replace(".zip", ""))
-
-zip_file_path = files[current_file_index] + ".zip"
-
 root = tk.Tk()
 root.attributes('-zoomed', True)
+
 
 canvas = tk.Canvas(root, bg="#1E1E1E", highlightthickness=0)
 canvas.pack(fill=tk.BOTH, expand=True)
 
-my_listbox = tk.Listbox(root, selectmode=tk.SINGLE, selectbackground='lightblue', activestyle='none')
+button_frame = tk.Frame(canvas, bg="#1E1E1E")
+button_frame.pack(side=tk.TOP)
 
-for file in files:
-    my_listbox.insert(tk.END, "Chapter " + os.path.basename(file).split()[-1])
+def load_manga(manga):
+    file_path = os.path.abspath(manga)
+    file_directory = os.path.dirname(file_path)
+    files = os.listdir(file_directory)
+    files = [file_directory + "/" + name for name in files]
+    files = [name.replace(".zip", "") for name in files]
+    files = sorted(files, key=natural_sort_key)
+    
+    current_file_index = files.index(file_path.replace(".zip", ""))
+    zip_file_path = files[current_file_index] + ".zip"
+    
+    my_listbox = tk.Listbox(root, selectmode=tk.SINGLE, selectbackground='lightblue', activestyle='none')
 
-my_listbox.config(height=min(my_listbox.size(), 20), width=70, font='Helvetica 13')
+    for file in files:
+        my_listbox.insert(tk.END, "Chapter " + os.path.basename(file).split()[-1])
 
-my_listbox.selection_set(current_file_index)
+    my_listbox.config(height=min(my_listbox.size(), 20), width=70, font='Helvetica 13')
+    my_listbox.selection_set(current_file_index)
+    my_listbox.bind('<<ListboxSelect>>', lambda event: on_listbox_select(my_listbox, files))
 
-canvas.bind("<Configure>", lambda event: on_canvas_configure(canvas, loaded_images, total_image_height))
-my_listbox.bind('<<ListboxSelect>>', on_listbox_select)
+    load_chapter(root, canvas, files, current_file_index)
 
-canvas.bind("<Button-4>", lambda event: scroll(canvas, event))  
-canvas.bind("<Button-5>", lambda event: scroll(canvas, event))  
-root.bind("<space>", lambda event: space_scroll(canvas, event))  
-root.bind("<Shift-space>", lambda event: shift_space_scroll(canvas, event))  
-root.bind("<Up>", lambda event: arrow_up_scroll(canvas, event))  
-root.bind("<Down>", lambda event: arrow_down_scroll(canvas, event))  
-root.bind("n", lambda event: next_file(root, canvas, files))  
-root.bind("p", lambda event: previous_file(root, canvas, files))  
-root.bind("l", lambda event: toggle_listbox())
+    image_files = load_images_from_zip(zip_file_path)
+    loaded_images, total_image_height = load_all_images(zip_file_path, image_files)
+
+    canvas.bind("<Configure>", lambda event: on_canvas_configure(canvas, loaded_images, total_image_height))
+    
+    canvas.bind("<Button-4>", lambda event: scroll(canvas, event))  
+    canvas.bind("<Button-5>", lambda event: scroll(canvas, event))  
+    root.bind("<space>", lambda event: space_scroll(canvas, event))  
+    root.bind("<Shift-space>", lambda event: shift_space_scroll(canvas, event))  
+    root.bind("<Up>", lambda event: arrow_up_scroll(canvas, event))  
+    root.bind("<Down>", lambda event: arrow_down_scroll(canvas, event))  
+    root.bind("n", lambda event: next_file(root, canvas, files))  
+    root.bind("p", lambda event: previous_file(root, canvas, files))  
+    root.bind("l", lambda event: toggle_listbox(my_listbox))
+
+    root.title(f"Comic Book Reader - {os.path.basename(zip_file_path)}")
+    root.mainloop()
 
 
-image_files = load_images_from_zip(zip_file_path)
-loaded_images, total_image_height = load_all_images(zip_file_path, image_files)
-show_images(canvas, loaded_images, total_image_height)
+def load_image(image_path, width):
+    jpeg_image = Image.open(image_path)
+    jpeg_image = jpeg_image.resize((250, width))
+    png_image = jpeg_image.convert("RGBA")
+    return ImageTk.PhotoImage(png_image)
 
-root.title(f"Comic Book Reader - {zip_file_path}")
+
+
+path = os.path.dirname(__file__)
+mangas = os.listdir(path + "/mangas")
+icons = [load_image(path + "/mangas/" + name + "/icon.jpg", canvas.winfo_reqwidth()) for name in mangas]
+
+if os.path.isfile(path + "/" "data.json"):
+    pass
+else:
+    open("data.json", "w").close()
+
+buttons_per_row = 5
+
+def load_pressed(button):
+    name = button.cget("text")
+    files = os.listdir(path + "/mangas/" + name)
+    files = [file for file in files if file.endswith(".zip")]
+    files = [path + "/mangas/" + name + "/" + file for file in files]
+    files = [name.replace(".zip", "") for name in files]
+    files = sorted(files, key=natural_sort_key)
+
+    try:
+        with open("data.json", "r") as file:
+            data = json.load(file)
+    except:
+        data = {}
+
+    try:
+        location = data[name]
+        if location:
+            load_manga(data[name])
+    except: 
+        with open("data.json", "w") as file:
+            data[name] = files[0] + ".zip"
+            json.dump(data, file, indent=1)
+            load_manga(files[0] + ".zip")
+
+
+for i,name,icon in zip(range(len(mangas)), mangas, icons):
+    button_container = tk.Frame(button_frame, bg="#1E1E1E")
+    button_container.grid(row=i // buttons_per_row, column=i % buttons_per_row)
+
+    manga_button = tk.Button(button_container, image=icon, text=name) #height=250, width=canvas.winfo_reqwidth(), image=icon)
+    manga_button.config(command=lambda button=manga_button: load_pressed(button))
+    manga_button.pack(side=tk.TOP, padx=5, pady=20)
+
+    text_label = tk.Label(button_container, text=f"{name.upper()}", bg="#1E1E1E", fg="#ffffff", font="Helvetica 13 bold")
+    text_label.pack(side=tk.TOP)
+
+    while text_label.winfo_reqwidth() > manga_button.winfo_reqwidth():
+        name = name[:-1]
+        text_label.config(text=name[:len(name) - 4] + "....")
+
+#load_manga(sys.argv[1])
+
+root.title(f"Comic Book Reader")
 
 root.mainloop()
