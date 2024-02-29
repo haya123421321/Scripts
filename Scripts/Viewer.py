@@ -45,7 +45,7 @@ def scrollbar(canvas, total_image_height):
     canvas.yview_moveto(0)
 
 def toggle_listbox():
-    new_x = my_listbox.winfo_reqwidth() + my_listbox.winfo_reqwidth() / 2
+    new_x = my_listbox.winfo_reqwidth()
     if my_listbox.winfo_ismapped():
         my_listbox.place_forget()
     else:
@@ -144,7 +144,7 @@ my_listbox = tk.Listbox(root, selectmode=tk.SINGLE, selectbackground='lightblue'
 for file in files:
     my_listbox.insert(tk.END, "Chapter " + os.path.basename(file).split()[-1])
 
-my_listbox.config(height=min(my_listbox.size(), 20), width=70)
+my_listbox.config(height=min(my_listbox.size(), 20), width=70, font='Helvetica 13')
 
 my_listbox.selection_set(current_file_index)
 
