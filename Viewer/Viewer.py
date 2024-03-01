@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 import os
 import sys
 import tkinter as tk
@@ -133,7 +131,6 @@ def load_manga(manga):
     file_path = os.path.abspath(manga)
     file_directory = os.path.dirname(file_path)
     files = os.listdir(file_directory)
-    files = [file for file in files if file.endswith(".zip")]
     files = [file_directory + "/" + name for name in files]
     files = [name.replace(".zip", "") for name in files]
     files = sorted(files, key=natural_sort_key)
@@ -178,8 +175,12 @@ def load_image(image_path, width):
     return ImageTk.PhotoImage(png_image)
 
 
+if os.path.exists(path + "/mangas"):
+    pass
+else:
+    os.mkdir(path + "/mangas")
 
-path = os.path.dirname(os.path.realpath(__file__))
+path = os.path.realpath(__file__)
 mangas = os.listdir(path + "/mangas")
 icons = [load_image(path + "/mangas/" + name + "/icon.jpg", canvas.winfo_reqwidth()) for name in mangas]
 
@@ -219,7 +220,7 @@ for i,name,icon in zip(range(len(mangas)), mangas, icons):
     button_container = tk.Frame(button_frame, bg="#1E1E1E")
     button_container.grid(row=i // buttons_per_row, column=i % buttons_per_row)
 
-    manga_button = tk.Button(button_container, image=icon, text=name)
+    manga_button = tk.Button(button_container, image=icon, text=name) #height=250, width=canvas.winfo_reqwidth(), image=icon)
     manga_button.config(command=lambda button=manga_button: load_pressed(button))
     manga_button.pack(side=tk.TOP, padx=5, pady=20)
 
@@ -229,6 +230,8 @@ for i,name,icon in zip(range(len(mangas)), mangas, icons):
     while text_label.winfo_reqwidth() > manga_button.winfo_reqwidth():
         name = name[:-1]
         text_label.config(text=name[:len(name) - 4] + "....")
+
+#load_manga(sys.argv[1])
 
 root.title(f"Comic Book Reader")
 
