@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 import os
 import sys
 import tkinter as tk
@@ -131,6 +133,7 @@ def load_manga(manga):
     file_path = os.path.abspath(manga)
     file_directory = os.path.dirname(file_path)
     files = os.listdir(file_directory)
+    files = [file for file in files if file.endswith(".zip")]
     files = [file_directory + "/" + name for name in files]
     files = [name.replace(".zip", "") for name in files]
     files = sorted(files, key=natural_sort_key)
@@ -176,7 +179,7 @@ def load_image(image_path, width):
 
 
 
-path = os.path.dirname(__file__)
+path = os.path.dirname(os.path.realpath(__file__))
 mangas = os.listdir(path + "/mangas")
 icons = [load_image(path + "/mangas/" + name + "/icon.jpg", canvas.winfo_reqwidth()) for name in mangas]
 
