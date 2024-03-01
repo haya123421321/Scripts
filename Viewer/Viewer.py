@@ -219,7 +219,7 @@ for i,name,icon in zip(range(len(mangas)), mangas, icons):
     button_container = tk.Frame(button_frame, bg="#1E1E1E")
     button_container.grid(row=i // buttons_per_row, column=i % buttons_per_row)
 
-    manga_button = tk.Button(button_container, image=icon, text=name) #height=250, width=canvas.winfo_reqwidth(), image=icon)
+    manga_button = tk.Button(button_container, image=icon, text=name)
     manga_button.config(command=lambda button=manga_button: load_pressed(button))
     manga_button.pack(side=tk.TOP, padx=5, pady=20)
 
