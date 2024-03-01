@@ -230,8 +230,6 @@ for i,name,icon in zip(range(len(mangas)), mangas, icons):
         name = name[:-1]
         text_label.config(text=name[:len(name) - 4] + "....")
 
-#load_manga(sys.argv[1])
-
 root.title(f"Comic Book Reader")
 
 root.mainloop()
