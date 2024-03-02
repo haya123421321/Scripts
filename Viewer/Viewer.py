@@ -39,13 +39,6 @@ def on_canvas_configure(canvas, loaded_images, total_image_height):
 def get_display_size(img):
     return img.width, img.height
 
-def scrollbar(canvas, total_image_height):
-    canvas.config(scrollregion=(0, 0, canvas.winfo_width(), total_image_height))
-    scrollbar = tk.Scrollbar(canvas, orient="vertical", command=canvas.yview)
-    scrollbar.pack(side="right", fill="y")
-    canvas.configure(yscrollcommand=scrollbar.set)
-    canvas.yview_moveto(0)
-
 def toggle_listbox(my_listbox):
     new_x = my_listbox.winfo_reqwidth()
     if my_listbox.winfo_ismapped():
@@ -77,7 +70,7 @@ def load_all_images(zip_file_path, image_files):
                 img = Image.open(img_file)
                 img = img.convert("RGB")
                 loaded_images.append(img)
-                total_image_height += img.height
+                total_image_height += img.height + 5
     return loaded_images, total_image_height
 
 def show_images(canvas, loaded_images, total_image_height):
@@ -94,9 +87,16 @@ def show_images(canvas, loaded_images, total_image_height):
         label = tk.Label(canvas, image=photo, bg="#1E1E1E")
         label.image = photo
         canvas.create_image(canvas.winfo_width() // 2, y_offset + img.height // 2, anchor=tk.CENTER, image=photo)
-        y_offset += img.height + 1 * 5
+        if y_offset == 0:
+            canvas.update()
+        y_offset += img.height + 5
 
-    scrollbar(canvas, total_image_height)
+    canvas.config(scrollregion=(0, 0, canvas.winfo_width(), y_offset))
+    scrollbar = tk.Scrollbar(canvas, orient="vertical", command=canvas.yview)
+    scrollbar.pack(side="right", fill="y")
+    canvas.configure(yscrollcommand=scrollbar.set)
+    canvas.yview_moveto(0)
+
     canvas.focus_set()
 
 def load_chapter(root, canvas, files, selected_index):
@@ -119,15 +119,6 @@ def previous_file(root, canvas, files):
     current_file_index = (current_file_index - 1) % len(files)
     load_chapter(root, canvas, files, current_file_index)
 
-root = tk.Tk()
-root.attributes('-zoomed', True)
-
-
-canvas = tk.Canvas(root, bg="#1E1E1E", highlightthickness=0)
-canvas.pack(fill=tk.BOTH, expand=True)
-
-button_frame = tk.Frame(canvas, bg="#1E1E1E")
-button_frame.pack(side=tk.TOP)
 
 def load_manga(manga):
     file_path = os.path.abspath(manga)
@@ -157,8 +148,6 @@ def load_manga(manga):
 
     canvas.bind("<Configure>", lambda event: on_canvas_configure(canvas, loaded_images, total_image_height))
     
-    canvas.bind("<Button-4>", lambda event: scroll(canvas, event))  
-    canvas.bind("<Button-5>", lambda event: scroll(canvas, event))  
     root.bind("<space>", lambda event: space_scroll(canvas, event))  
     root.bind("<Shift-space>", lambda event: shift_space_scroll(canvas, event))  
     root.bind("<Up>", lambda event: arrow_up_scroll(canvas, event))  
@@ -166,30 +155,30 @@ def load_manga(manga):
     root.bind("n", lambda event: next_file(root, canvas, files))  
     root.bind("p", lambda event: previous_file(root, canvas, files))  
     root.bind("l", lambda event: toggle_listbox(my_listbox))
+    root.bind("<Escape>", lambda event: home()) 
 
     root.title(f"Comic Book Reader - {os.path.basename(zip_file_path)}")
     root.mainloop()
 
 
 def load_image(image_path, width):
-    jpeg_image = Image.open(image_path)
-    jpeg_image = jpeg_image.resize((250, width))
-    png_image = jpeg_image.convert("RGBA")
-    return ImageTk.PhotoImage(png_image)
-
+    try:
+        jpeg_image = Image.open(image_path)
+        jpeg_image = jpeg_image.resize((250, width))
+        png_image = jpeg_image.convert("RGBA")
+        return ImageTk.PhotoImage(png_image)
+    except:
+        pass
 
 
 path = os.path.dirname(os.path.realpath(__file__))
 json_file_path = path + "/" "data.json"
 mangas = os.listdir(path + "/mangas")
-icons = [load_image(path + "/mangas/" + name + "/icon.jpg", canvas.winfo_reqwidth()) for name in mangas]
 
 if os.path.isfile(json_file_path):
     pass
 else:
     open(json_file_path, "w").close()
-
-buttons_per_row = 5
 
 def load_pressed(button):
     name = button.cget("text")
@@ -215,22 +204,60 @@ def load_pressed(button):
             json.dump(data, file, indent=1)
             load_manga(files[0] + ".zip")
 
+root = tk.Tk()
+root.attributes('-zoomed', True)
 
-for i,name,icon in zip(range(len(mangas)), mangas, icons):
-    button_container = tk.Frame(button_frame, bg="#1E1E1E")
-    button_container.grid(row=i // buttons_per_row, column=i % buttons_per_row)
+canvas = tk.Canvas(root, bg="#1E1E1E", highlightthickness=0)
+canvas.pack(fill=tk.BOTH, expand=True)
 
-    manga_button = tk.Button(button_container, image=icon, text=name)
-    manga_button.config(command=lambda button=manga_button: load_pressed(button))
-    manga_button.pack(side=tk.TOP, padx=5, pady=20)
+canvas.bind("<Button-4>", lambda event: scroll(canvas, event))  
+canvas.bind("<Button-5>", lambda event: scroll(canvas, event))  
 
-    text_label = tk.Label(button_container, text=f"{name.upper()}", bg="#1E1E1E", fg="#ffffff", font="Helvetica 13 bold")
-    text_label.pack(side=tk.TOP)
+icons = [load_image(path + "/mangas/" + name + "/icon.jpg", canvas.winfo_reqwidth()) for name in mangas]
 
-    while text_label.winfo_reqwidth() > manga_button.winfo_reqwidth():
-        name = name[:-1]
-        text_label.config(text=name[:len(name) - 4] + "....")
+def home():
+    for widget in canvas.winfo_children():
+        widget.destroy()
 
+    button_frame = tk.Frame(canvas, bg="#1E1E1E")
+    button_frame.pack(side=tk.TOP)
+
+    buttons_per_row = 5
+
+    for i, (name, icon) in enumerate(zip(mangas, icons)):
+        button_container = tk.Frame(button_frame, bg="#1E1E1E")
+        button_container.grid(row=i // buttons_per_row, column=i % buttons_per_row)
+
+        manga_button = tk.Button(button_container, image=icon, text=name)
+        manga_button.config(command=lambda button=manga_button: load_pressed(button))
+        manga_button.pack(side=tk.TOP, padx=5, pady=20)
+
+        manga_button.bind("<Button-4>", lambda event: scroll(canvas, event))  
+        manga_button.bind("<Button-5>", lambda event: scroll(canvas, event))  
+        button_container.bind("<Button-4>", lambda event: scroll(canvas, event))  
+        button_container.bind("<Button-5>", lambda event: scroll(canvas, event))
+        button_frame.bind("<Button-4>", lambda event: scroll(canvas, event))  
+        button_frame.bind("<Button-5>", lambda event: scroll(canvas, event))  
+
+        text_label = tk.Label(button_container, text=f"{name}", bg="#1E1E1E", fg="#ffffff", font="Helvetica 13 bold")
+        text_label.pack(side=tk.TOP)
+
+        while text_label.winfo_reqwidth() > manga_button.winfo_reqwidth():
+            name = name[:-1]
+            text_label.config(text=name[:len(name) - 4] + "....")
+
+    canvas.update_idletasks()
+
+    scrollbar = tk.Scrollbar(canvas, orient="vertical", command=canvas.yview)
+    scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+    
+    canvas.configure(yscrollcommand=scrollbar.set)
+    canvas.config(scrollregion=button_frame.bbox("all"))
+
+    canvas.create_window((button_frame.winfo_reqwidth() / 5 + scrollbar.winfo_reqwidth() * 2, 0), window=button_frame, anchor="nw")
+
+    canvas.yview_moveto(0)
+
+home()
 root.title(f"Comic Book Reader")
-
 root.mainloop()
