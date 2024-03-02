@@ -7,6 +7,7 @@ from PIL import Image, ImageTk
 import zipfile
 import re
 import json
+from memory_profiler import profile
 
 def scroll(canvas, event):
     if event.num == 5:
@@ -90,6 +91,7 @@ def show_images(canvas, loaded_images, total_image_height):
         if y_offset == 0:
             canvas.update()
         y_offset += img.height + 5
+        del photo
 
     canvas.config(scrollregion=(0, 0, canvas.winfo_width(), y_offset))
     scrollbar = tk.Scrollbar(canvas, orient="vertical", command=canvas.yview)
@@ -106,7 +108,7 @@ def load_chapter(root, canvas, files, selected_index):
     image_files = load_images_from_zip(zip_file_path)
     loaded_images, total_image_height = load_all_images(zip_file_path, image_files)
     on_canvas_configure(canvas, loaded_images, total_image_height)
-    root.title(f"Comic Book Reader - {os.path.basename(zip_file_path)}")
+    root.title(f"Comic Book Reader - {os.path.splitext(os.path.basename(zip_file_path))[0]}")
 
 
 def next_file(root, canvas, files):
@@ -155,11 +157,10 @@ def load_manga(manga):
     root.bind("n", lambda event: next_file(root, canvas, files))  
     root.bind("p", lambda event: previous_file(root, canvas, files))  
     root.bind("l", lambda event: toggle_listbox(my_listbox))
-    root.bind("<Escape>", lambda event: home()) 
+    root.bind("<Escape>", lambda event: home(False)) 
 
-    root.title(f"Comic Book Reader - {os.path.basename(zip_file_path)}")
+    root.title(f"Comic Book Reader - {os.path.splitext(os.path.basename(zip_file_path))[0]}")
     root.mainloop()
-
 
 def load_image(image_path, width):
     try:
@@ -215,9 +216,10 @@ canvas.bind("<Button-5>", lambda event: scroll(canvas, event))
 
 icons = [load_image(path + "/mangas/" + name + "/icon.jpg", canvas.winfo_reqwidth()) for name in mangas]
 
-def home():
-    for widget in canvas.winfo_children():
-        widget.destroy()
+def home(first_time):
+    if not first_time:
+        for widget in canvas.winfo_children():
+            widget.destroy()
 
     button_frame = tk.Frame(canvas, bg="#1E1E1E")
     button_frame.pack(side=tk.TOP)
@@ -255,9 +257,8 @@ def home():
     canvas.config(scrollregion=button_frame.bbox("all"))
 
     canvas.create_window((button_frame.winfo_reqwidth() / 5 + scrollbar.winfo_reqwidth() * 2, 0), window=button_frame, anchor="nw")
-
     canvas.yview_moveto(0)
 
-home()
+home(True)
 root.title(f"Comic Book Reader")
 root.mainloop()
