@@ -51,7 +51,7 @@ def on_listbox_select(my_listbox, files):
     selected_index = my_listbox.curselection()
     if selected_index:
         selected_index = int(selected_index[0])
-        load_chapter(root, canvas, files, selected_index)
+        load_chapter(root, canvas, files, selected_index, my_listbox)
 
 def natural_sort_key(s):
     return [int(text) if text.isdigit() else text.lower() for text in re.split('([0-9]+)', s)]
@@ -101,25 +101,37 @@ def show_images(canvas, loaded_images, total_image_height):
 
     canvas.focus_set()
 
-def load_chapter(root, canvas, files, selected_index):
+def load_chapter(root, canvas, files, selected_index, my_listbox):
     global current_file_index
     current_file_index = selected_index
+    my_listbox.selection_clear(0, tk.END)
+    my_listbox.selection_set(current_file_index)
     zip_file_path = files[current_file_index] + ".zip"
+    name = " ".join(os.path.splitext(os.path.basename(zip_file_path))[0].split()[:-1])
     image_files = load_images_from_zip(zip_file_path)
     loaded_images, total_image_height = load_all_images(zip_file_path, image_files)
     on_canvas_configure(canvas, loaded_images, total_image_height)
+
+
     root.title(f"Comic Book Reader - {os.path.splitext(os.path.basename(zip_file_path))[0]}")
 
+    with open(json_file_path, "r") as file:
+        data = json.load(file)
+        if zip_file_path != data[name]:
+            with open(json_file_path, "w") as file:
+                data[name] = zip_file_path
+                json.dump(data, file, indent=1)
 
-def next_file(root, canvas, files):
+
+def next_file(root, canvas, files, my_listbox):
     global current_file_index
     current_file_index = (current_file_index + 1) % len(files)
-    load_chapter(root, canvas, files, current_file_index)
+    load_chapter(root, canvas, files, current_file_index, my_listbox)
 
-def previous_file(root, canvas, files):
+def previous_file(root, canvas, files, my_listbox):
     global current_file_index
     current_file_index = (current_file_index - 1) % len(files)
-    load_chapter(root, canvas, files, current_file_index)
+    load_chapter(root, canvas, files, current_file_index, my_listbox)
 
 
 def load_manga(manga):
@@ -143,7 +155,7 @@ def load_manga(manga):
     my_listbox.selection_set(current_file_index)
     my_listbox.bind('<<ListboxSelect>>', lambda event: on_listbox_select(my_listbox, files))
 
-    load_chapter(root, canvas, files, current_file_index)
+    load_chapter(root, canvas, files, current_file_index, my_listbox)
 
     image_files = load_images_from_zip(zip_file_path)
     loaded_images, total_image_height = load_all_images(zip_file_path, image_files)
@@ -152,8 +164,8 @@ def load_manga(manga):
     root.bind("<Shift-space>", lambda event: shift_space_scroll(canvas, event))  
     root.bind("<Up>", lambda event: arrow_up_scroll(canvas, event))  
     root.bind("<Down>", lambda event: arrow_down_scroll(canvas, event))  
-    root.bind("n", lambda event: next_file(root, canvas, files))  
-    root.bind("p", lambda event: previous_file(root, canvas, files))  
+    root.bind("n", lambda event: next_file(root, canvas, files, my_listbox))  
+    root.bind("p", lambda event: previous_file(root, canvas, files, my_listbox))  
     root.bind("l", lambda event: toggle_listbox(my_listbox))
     root.bind("<Escape>", lambda event: home(False)) 
 
@@ -207,6 +219,10 @@ def load_pressed(button):
             data[name] = files[0] + ".zip"
             json.dump(data, file, indent=1)
             load_manga(files[0] + ".zip")
+
+#def button_pressed(button):
+#    name = button.cget("text")
+#    load_pressed(name)
 
 root = tk.Tk()
 if os.name == "nt":
