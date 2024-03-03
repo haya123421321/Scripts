@@ -112,16 +112,17 @@ def load_chapter(root, canvas, files, selected_index, my_listbox):
     loaded_images, total_image_height = load_all_images(zip_file_path, image_files)
     on_canvas_configure(canvas, loaded_images, total_image_height)
 
-
     root.title(f"Comic Book Reader - {os.path.splitext(os.path.basename(zip_file_path))[0]}")
 
-    with open(json_file_path, "r") as file:
-        data = json.load(file)
-        if zip_file_path != data[name]:
-            with open(json_file_path, "w") as file:
-                data[name] = zip_file_path
-                json.dump(data, file, indent=1)
-
+    try:
+        with open(json_file_path, "r") as file:
+            data = json.load(file)
+            if zip_file_path != data[name]:
+                with open(json_file_path, "w") as file:
+                    data[name] = zip_file_path
+                    json.dump(data, file, indent=1)
+    except:
+        pass
 
 def next_file(root, canvas, files, my_listbox):
     global current_file_index
