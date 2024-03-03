@@ -8,7 +8,7 @@ import zipfile
 import re
 import json
 import gc
-gc.enable()
+
 def scroll(canvas, event):
     if event.num == 5:
         direction = 1 
