@@ -7,8 +7,8 @@ from PIL import Image, ImageTk
 import zipfile
 import re
 import json
-from memory_profiler import profile
-
+import gc
+gc.enable()
 def scroll(canvas, event):
     if event.num == 5:
         direction = 1 
@@ -228,6 +228,7 @@ def home(first_time):
             widget.destroy()
         for binding in ["<space>", "<Shift-space>", "<Up>", "<Down>", "n", "p","l", "<Escape>" ]:
             root.unbind(binding)
+        gc.collect()
 
     button_frame = tk.Frame(canvas, bg="#1E1E1E")
     button_frame.pack(side=tk.TOP)
