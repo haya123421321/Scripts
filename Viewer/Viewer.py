@@ -169,7 +169,7 @@ def load_image(image_path, width):
     except:
         pass
 
-path = os.path.dirname(os.path.realpath(__name__))
+path = os.path.dirname(os.path.realpath(__file__))
 json_file_path = os.path.join(path, "data.json")
 
 if os.path.isfile(json_file_path):
