@@ -127,10 +127,10 @@ def load_manga(manga):
     file_directory = os.path.dirname(file_path)
     files = os.listdir(file_directory)
     files = [file for file in files if file.endswith(".zip")]
-    files = [file_directory + "/" + name for name in files]
+    files = [os.path.join(file_directory, name) for name in files]
     files = [name.replace(".zip", "") for name in files]
     files = sorted(files, key=natural_sort_key)
-    
+
     current_file_index = files.index(file_path.replace(".zip", ""))
     zip_file_path = files[current_file_index] + ".zip"
     
@@ -147,8 +147,6 @@ def load_manga(manga):
 
     image_files = load_images_from_zip(zip_file_path)
     loaded_images, total_image_height = load_all_images(zip_file_path, image_files)
-
-    canvas.bind("<Configure>", lambda event: on_canvas_configure(canvas, loaded_images, total_image_height))
     
     root.bind("<space>", lambda event: space_scroll(canvas, event))  
     root.bind("<Shift-space>", lambda event: shift_space_scroll(canvas, event))  
@@ -171,21 +169,26 @@ def load_image(image_path, width):
     except:
         pass
 
-
-path = os.path.dirname(os.path.realpath(__file__))
-json_file_path = path + "/" "data.json"
-mangas = os.listdir(path + "/mangas")
+path = os.path.dirname(os.path.realpath(__name__))
+json_file_path = os.path.join(path, "data.json")
 
 if os.path.isfile(json_file_path):
     pass
 else:
     open(json_file_path, "w").close()
 
+if os.path.isdir(os.path.join(path, "mangas")):
+    pass
+else:
+    os.mkdir(os.path.join(path, "mangas"))
+
+mangas = os.listdir(os.path.join(path, "mangas"))
+
 def load_pressed(button):
     name = button.cget("text")
-    files = os.listdir(path + "/mangas/" + name)
+    files = os.listdir(os.path.join(path, "mangas", name))
     files = [file for file in files if file.endswith(".zip")]
-    files = [path + "/mangas/" + name + "/" + file for file in files]
+    files = [os.path.join(path, "mangas", name, file) for file in files]
     files = [name.replace(".zip", "") for name in files]
     files = sorted(files, key=natural_sort_key)
 
@@ -206,7 +209,10 @@ def load_pressed(button):
             load_manga(files[0] + ".zip")
 
 root = tk.Tk()
-root.attributes('-zoomed', True)
+if os.name == "nt":
+    root.state('zoomed')
+else:
+    root.attributes('-zoomed', True)
 
 canvas = tk.Canvas(root, bg="#1E1E1E", highlightthickness=0)
 canvas.pack(fill=tk.BOTH, expand=True)
@@ -214,12 +220,14 @@ canvas.pack(fill=tk.BOTH, expand=True)
 canvas.bind("<Button-4>", lambda event: scroll(canvas, event))  
 canvas.bind("<Button-5>", lambda event: scroll(canvas, event))  
 
-icons = [load_image(path + "/mangas/" + name + "/icon.jpg", canvas.winfo_reqwidth()) for name in mangas]
+icons = [load_image(os.path.join(path, "mangas", name, "icon.jpg"), canvas.winfo_reqwidth()) for name in mangas]
 
 def home(first_time):
     if not first_time:
         for widget in canvas.winfo_children():
             widget.destroy()
+        for binding in ["<space>", "<Shift-space>", "<Up>", "<Down>", "n", "p","l", "<Escape>" ]:
+            root.unbind(binding)
 
     button_frame = tk.Frame(canvas, bg="#1E1E1E")
     button_frame.pack(side=tk.TOP)
