@@ -221,10 +221,6 @@ def load_pressed(button):
             json.dump(data, file, indent=1)
             load_manga(files[0] + ".zip")
 
-#def button_pressed(button):
-#    name = button.cget("text")
-#    load_pressed(name)
-
 root = tk.Tk()
 if os.name == "nt":
     root.state('zoomed')
