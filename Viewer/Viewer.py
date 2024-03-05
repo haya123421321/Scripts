@@ -8,34 +8,45 @@ import zipfile
 import re
 import json
 import gc
+import time
+import atexit
 
-def scroll(canvas, event):
+def scroll(direction, name):
+    canvas.yview_scroll(direction, "units")
+    y = canvas.yview()[0]
+    if name != None:
+        with open(json_file_path, "w") as file:
+            data[name]["last_y_axis"] = y
+            json.dump(data, file, indent=4)
+
+def mouse_scroll(canvas, event, name):
     if event.num == 5:
         direction = 1 
     elif event.num == 4:
         direction = -1
-    canvas.yview_scroll(direction, "units")  
 
-def space_scroll(canvas, event):
+    scroll(direction, name)  
+
+def space_scroll(canvas, event, name):
     for _ in range(8):
-        canvas.yview_scroll(1, "units")
+        scroll(1, name)
         canvas.update()
         root.after(10)
 
-def shift_space_scroll(canvas, event):
+def shift_space_scroll(canvas, event, name):
     for _ in range(8):
-        canvas.yview_scroll(-1, "units")
+        scroll(-1, name)
         canvas.update()
         root.after(10)
 
-def arrow_up_scroll(canvas, event):
-    canvas.yview_scroll(-1, "units")  
+def arrow_up_scroll(canvas, event, name):
+    scroll(-1, name)  
 
-def arrow_down_scroll(canvas, event):
-    canvas.yview_scroll(1, "units")  
+def arrow_down_scroll(canvas, event, name):
+    scroll(1, name)  
 
-def on_canvas_configure(canvas, loaded_images, total_image_height):
-    show_images(canvas, loaded_images, total_image_height)
+def on_canvas_configure(canvas, loaded_images, total_image_height, name):
+    show_images(canvas, loaded_images, total_image_height, name)
 
 def get_display_size(img):
     return img.width, img.height
@@ -74,7 +85,7 @@ def load_all_images(zip_file_path, image_files):
                 total_image_height += img.height + 5
     return loaded_images, total_image_height
 
-def show_images(canvas, loaded_images, total_image_height):
+def show_images(canvas, loaded_images, total_image_height, name):
     for widget in canvas.winfo_children():
         widget.destroy()
 
@@ -97,30 +108,28 @@ def show_images(canvas, loaded_images, total_image_height):
     scrollbar = tk.Scrollbar(canvas, orient="vertical", command=canvas.yview)
     scrollbar.pack(side="right", fill="y")
     canvas.configure(yscrollcommand=scrollbar.set)
-    canvas.yview_moveto(0)
+    if "last_y_axis" in data[name]:
+        canvas.yview_moveto(data[name]["last_y_axis"])
 
     canvas.focus_set()
 
-def load_chapter(root, canvas, files, selected_index, my_listbox):
+def load_chapter(root, canvas, files, selected_index, my_listbox, name):
     global current_file_index
     current_file_index = selected_index
     my_listbox.selection_clear(0, tk.END)
     my_listbox.selection_set(current_file_index)
     zip_file_path = files[current_file_index] + ".zip"
-    name = " ".join(os.path.splitext(os.path.basename(zip_file_path))[0].split()[:-1])
     image_files = load_images_from_zip(zip_file_path)
     loaded_images, total_image_height = load_all_images(zip_file_path, image_files)
-    on_canvas_configure(canvas, loaded_images, total_image_height)
+    on_canvas_configure(canvas, loaded_images, total_image_height, name)
 
     root.title(f"Comic Book Reader - {os.path.splitext(os.path.basename(zip_file_path))[0]}")
 
     try:
-        with open(json_file_path, "r") as file:
-            data = json.load(file)
-            if zip_file_path != data[name]:
-                with open(json_file_path, "w") as file:
-                    data[name] = zip_file_path
-                    json.dump(data, file, indent=1)
+        if zip_file_path != data[name]:
+            with open(json_file_path, "w") as file:
+                data[name]["path"] = zip_file_path
+                json.dump(data, file, indent=4)
     except:
         pass
 
@@ -134,8 +143,7 @@ def previous_file(root, canvas, files, my_listbox):
     current_file_index = (current_file_index - 1) % len(files)
     load_chapter(root, canvas, files, current_file_index, my_listbox)
 
-
-def load_manga(manga):
+def load_manga(manga, name):
     file_path = os.path.abspath(manga)
     file_directory = os.path.dirname(file_path)
     files = os.listdir(file_directory)
@@ -156,20 +164,21 @@ def load_manga(manga):
     my_listbox.selection_set(current_file_index)
     my_listbox.bind('<<ListboxSelect>>', lambda event: on_listbox_select(my_listbox, files))
 
-    load_chapter(root, canvas, files, current_file_index, my_listbox)
+    load_chapter(root, canvas, files, current_file_index, my_listbox, name)
 
     image_files = load_images_from_zip(zip_file_path)
     loaded_images, total_image_height = load_all_images(zip_file_path, image_files)
     
-    root.bind("<space>", lambda event: space_scroll(canvas, event))  
-    root.bind("<Shift-space>", lambda event: shift_space_scroll(canvas, event))  
-    root.bind("<Up>", lambda event: arrow_up_scroll(canvas, event))  
-    root.bind("<Down>", lambda event: arrow_down_scroll(canvas, event))  
-    root.bind("n", lambda event: next_file(root, canvas, files, my_listbox))  
-    root.bind("p", lambda event: previous_file(root, canvas, files, my_listbox))  
+    root.bind("<Button-4>", lambda event: mouse_scroll(canvas, event, name))  
+    root.bind("<Button-5>", lambda event: mouse_scroll(canvas, event, name))  
+    root.bind("<space>", lambda event: space_scroll(canvas, event, name))  
+    root.bind("<Shift-space>", lambda event: shift_space_scroll(canvas, event, name))  
+    root.bind("<Up>", lambda event: arrow_up_scroll(canvas, event, name))  
+    root.bind("<Down>", lambda event: arrow_down_scroll(canvas, event, name))  
+    root.bind("n", lambda event: next_file(root, canvas, files, my_listbox))
+    root.bind("p", lambda event: previous_file(root, canvas, files, my_listbox, current_file_index))  
     root.bind("l", lambda event: toggle_listbox(my_listbox))
     root.bind("<Escape>", lambda event: home(False)) 
-
     root.title(f"Comic Book Reader - {os.path.splitext(os.path.basename(zip_file_path))[0]}")
     root.mainloop()
 
@@ -206,20 +215,14 @@ def load_pressed(button):
     files = sorted(files, key=natural_sort_key)
 
     try:
-        with open(json_file_path, "r") as file:
-            data = json.load(file)
-    except:
-        data = {}
-
-    try:
         location = data[name]
         if location:
-            load_manga(data[name])
+            load_manga(data[name]["path"], name)
     except: 
         with open(json_file_path, "w") as file:
-            data[name] = files[0] + ".zip"
-            json.dump(data, file, indent=1)
-            load_manga(files[0] + ".zip")
+            data[name] = {"path": files[0] + ".zip"}
+            json.dump(data, file, indent=4)
+            load_manga(files[0] + ".zip", name)
 
 root = tk.Tk()
 if os.name == "nt":
@@ -230,8 +233,11 @@ else:
 canvas = tk.Canvas(root, bg="#1E1E1E", highlightthickness=0)
 canvas.pack(fill=tk.BOTH, expand=True)
 
-canvas.bind("<Button-4>", lambda event: scroll(canvas, event))  
-canvas.bind("<Button-5>", lambda event: scroll(canvas, event))  
+try:
+    with open(json_file_path, "r") as file:
+        data = json.load(file)
+except json.decoder.JSONDecodeError:
+    data = {}
 
 icons = [load_image(os.path.join(path, "mangas", name, "icon.jpg"), canvas.winfo_reqwidth()) for name in mangas]
 
@@ -256,12 +262,12 @@ def home(first_time):
         manga_button.config(command=lambda button=manga_button: load_pressed(button))
         manga_button.pack(side=tk.TOP, padx=5, pady=20)
 
-        manga_button.bind("<Button-4>", lambda event: scroll(canvas, event))  
-        manga_button.bind("<Button-5>", lambda event: scroll(canvas, event))  
-        button_container.bind("<Button-4>", lambda event: scroll(canvas, event))  
-        button_container.bind("<Button-5>", lambda event: scroll(canvas, event))
-        button_frame.bind("<Button-4>", lambda event: scroll(canvas, event))  
-        button_frame.bind("<Button-5>", lambda event: scroll(canvas, event))  
+        manga_button.bind("<Button-4>", lambda event: mouse_scroll(canvas, event, None))  
+        manga_button.bind("<Button-5>", lambda event: mouse_scroll(canvas, event, None))  
+        button_container.bind("<Button-4>", lambda event: mouse_scroll(canvas, event, None))  
+        button_container.bind("<Button-5>", lambda event: mouse_scroll(canvas, event, None))
+        button_frame.bind("<Button-4>", lambda event: mouse_scroll(canvas, event, None))  
+        button_frame.bind("<Button-5>", lambda event: mouse_scroll(canvas, event, None))  
 
         text_label = tk.Label(button_container, text=f"{name}", bg="#1E1E1E", fg="#ffffff", font="Helvetica 13 bold")
         text_label.pack(side=tk.TOP)
@@ -279,7 +285,11 @@ def home(first_time):
     canvas.config(scrollregion=button_frame.bbox("all"))
 
     canvas.create_window((button_frame.winfo_reqwidth() / 5 + scrollbar.winfo_reqwidth() * 2, 0), window=button_frame, anchor="nw")
-    canvas.yview_moveto(0)
+
+def save_data_on_exit():
+    with open(json_file_path, "w") as file:
+        json.dump(data, file, indent=4)
+atexit.register(save_data_on_exit)
 
 home(True)
 root.title(f"Comic Book Reader")
