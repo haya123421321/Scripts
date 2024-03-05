@@ -9,7 +9,6 @@ import re
 import json
 import gc
 import time
-import atexit
 
 def scroll(direction, name):
     canvas.yview_scroll(direction, "units")
@@ -286,11 +285,13 @@ def home(first_time):
 
     canvas.create_window((button_frame.winfo_reqwidth() / 5 + scrollbar.winfo_reqwidth() * 2, 0), window=button_frame, anchor="nw")
 
-def save_data_on_exit():
-    with open(json_file_path, "w") as file:
-        json.dump(data, file, indent=4)
-atexit.register(save_data_on_exit)
-
 home(True)
 root.title(f"Comic Book Reader")
 root.mainloop()
+
+for name in data:
+    if name not in mangas:
+        del data[name]
+
+with open(json_file_path, "w") as file:
+    json.dump(data, file, indent=4)
