@@ -162,8 +162,6 @@ def load_manga(manga, name):
     image_files = load_images_from_zip(zip_file_path)
     loaded_images, total_image_height = load_all_images(zip_file_path, image_files)
     
-    root.bind("<Button-4>", lambda event: mouse_scroll(canvas, event))  
-    root.bind("<Button-5>", lambda event: mouse_scroll(canvas, event))  
     root.bind("<space>", lambda event: space_scroll(canvas, event))  
     root.bind("<Shift-space>", lambda event: shift_space_scroll(canvas, event))  
     root.bind("<Up>", lambda event: arrow_up_scroll(canvas, event))  
@@ -233,6 +231,8 @@ else:
 
 canvas = tk.Canvas(root, bg="#1E1E1E", highlightthickness=0)
 canvas.pack(fill=tk.BOTH, expand=True)
+root.bind("<Button-4>", lambda event: mouse_scroll(canvas, event))  
+root.bind("<Button-5>", lambda event: mouse_scroll(canvas, event))  
 
 try:
     with open(json_file_path, "r") as file:
@@ -266,12 +266,12 @@ def home(first_time):
         manga_button.config(command=lambda button=manga_button: load_pressed(button))
         manga_button.pack(side=tk.TOP, padx=5, pady=20)
 
-        manga_button.bind("<Button-4>", lambda event: mouse_scroll(canvas, event, None))  
-        manga_button.bind("<Button-5>", lambda event: mouse_scroll(canvas, event, None))  
-        button_container.bind("<Button-4>", lambda event: mouse_scroll(canvas, event, None))  
-        button_container.bind("<Button-5>", lambda event: mouse_scroll(canvas, event, None))
-        button_frame.bind("<Button-4>", lambda event: mouse_scroll(canvas, event, None))  
-        button_frame.bind("<Button-5>", lambda event: mouse_scroll(canvas, event, None))  
+        manga_button.bind("<Button-4>", lambda event: mouse_scroll(canvas, event))  
+        manga_button.bind("<Button-5>", lambda event: mouse_scroll(canvas, event))  
+        button_container.bind("<Button-4>", lambda event: mouse_scroll(canvas, event))  
+        button_container.bind("<Button-5>", lambda event: mouse_scroll(canvas, event))
+        button_frame.bind("<Button-4>", lambda event: mouse_scroll(canvas, event))  
+        button_frame.bind("<Button-5>", lambda event: mouse_scroll(canvas, event))  
 
         text_label = tk.Label(button_container, text=f"{name}", bg="#1E1E1E", fg="#ffffff", font="Helvetica 13 bold")
         text_label.pack(side=tk.TOP)
