@@ -231,6 +231,7 @@ else:
 
 canvas = tk.Canvas(root, bg="#1E1E1E", highlightthickness=0)
 canvas.pack(fill=tk.BOTH, expand=True)
+
 root.bind("<Button-4>", lambda event: mouse_scroll(canvas, event))  
 root.bind("<Button-5>", lambda event: mouse_scroll(canvas, event))  
 
