@@ -7,42 +7,33 @@ from PIL import Image, ImageTk
 import zipfile
 import re
 import json
-import gc
 import time
 
-def scroll(direction, name):
-    canvas.yview_scroll(direction, "units")
-    y = canvas.yview()[0]
-    if name != None:
-        with open(json_file_path, "w") as file:
-            data[name]["last_y_axis"] = y
-            json.dump(data, file, indent=4)
-
-def mouse_scroll(canvas, event, name):
+def mouse_scroll(canvas, event):
     if event.num == 5:
         direction = 1 
     elif event.num == 4:
         direction = -1
 
-    scroll(direction, name)  
+    canvas.yview_scroll(direction, "units")
 
-def space_scroll(canvas, event, name):
+def space_scroll(canvas, event):
     for _ in range(8):
-        scroll(1, name)
+        canvas.yview_scroll(1, "units")
         canvas.update()
         root.after(10)
 
-def shift_space_scroll(canvas, event, name):
+def shift_space_scroll(canvas, event):
     for _ in range(8):
-        scroll(-1, name)
+        canvas.yview_scroll(-1, "units")
         canvas.update()
         root.after(10)
 
-def arrow_up_scroll(canvas, event, name):
-    scroll(-1, name)  
+def arrow_up_scroll(canvas, event):
+    canvas.yview_scroll(-1, v)  
 
-def arrow_down_scroll(canvas, event, name):
-    scroll(1, name)  
+def arrow_down_scroll(canvas, event):
+    canvas.yview_scroll(1, "units")  
 
 def on_canvas_configure(canvas, loaded_images, total_image_height, name):
     show_images(canvas, loaded_images, total_image_height, name)
@@ -101,7 +92,6 @@ def show_images(canvas, loaded_images, total_image_height, name):
         if y_offset == 0:
             canvas.update()
         y_offset += img.height + 5
-        del photo
 
     canvas.config(scrollregion=(0, 0, canvas.winfo_width(), y_offset))
     scrollbar = tk.Scrollbar(canvas, orient="vertical", command=canvas.yview)
@@ -142,7 +132,11 @@ def previous_file(root, canvas, files, my_listbox):
     current_file_index = (current_file_index - 1) % len(files)
     load_chapter(root, canvas, files, current_file_index, my_listbox)
 
+current_manga = None
+
 def load_manga(manga, name):
+    global current_manga
+    current_manga = name
     file_path = os.path.abspath(manga)
     file_directory = os.path.dirname(file_path)
     files = os.listdir(file_directory)
@@ -168,18 +162,16 @@ def load_manga(manga, name):
     image_files = load_images_from_zip(zip_file_path)
     loaded_images, total_image_height = load_all_images(zip_file_path, image_files)
     
-    root.bind("<Button-4>", lambda event: mouse_scroll(canvas, event, name))  
-    root.bind("<Button-5>", lambda event: mouse_scroll(canvas, event, name))  
-    root.bind("<space>", lambda event: space_scroll(canvas, event, name))  
-    root.bind("<Shift-space>", lambda event: shift_space_scroll(canvas, event, name))  
-    root.bind("<Up>", lambda event: arrow_up_scroll(canvas, event, name))  
-    root.bind("<Down>", lambda event: arrow_down_scroll(canvas, event, name))  
+    root.bind("<Button-4>", lambda event: mouse_scroll(canvas, event))  
+    root.bind("<Button-5>", lambda event: mouse_scroll(canvas, event))  
+    root.bind("<space>", lambda event: space_scroll(canvas, event))  
+    root.bind("<Shift-space>", lambda event: shift_space_scroll(canvas, event))  
+    root.bind("<Up>", lambda event: arrow_up_scroll(canvas, event))  
+    root.bind("<Down>", lambda event: arrow_down_scroll(canvas, event))  
     root.bind("n", lambda event: next_file(root, canvas, files, my_listbox))
     root.bind("p", lambda event: previous_file(root, canvas, files, my_listbox, current_file_index))  
     root.bind("l", lambda event: toggle_listbox(my_listbox))
     root.bind("<Escape>", lambda event: home(False)) 
-    root.title(f"Comic Book Reader - {os.path.splitext(os.path.basename(zip_file_path))[0]}")
-    root.mainloop()
 
 def load_image(image_path, width):
     try:
@@ -223,7 +215,17 @@ def load_pressed(button):
             json.dump(data, file, indent=4)
             load_manga(files[0] + ".zip", name)
 
+def save_y_axis_position():
+    if canvas is not None:
+        y = canvas.yview()[0]
+        if current_manga:
+            data[current_manga]["last_y_axis"] = y
+            with open(json_file_path, "w") as file:
+                json.dump(data, file, indent=4)
+        root.destroy()
+
 root = tk.Tk()
+root.protocol("WM_DELETE_WINDOW", save_y_axis_position)
 if os.name == "nt":
     root.state('zoomed')
 else:
@@ -242,11 +244,14 @@ icons = [load_image(os.path.join(path, "mangas", name, "icon.jpg"), canvas.winfo
 
 def home(first_time):
     if not first_time:
+        y = canvas.yview()[0]
+        data[current_manga]["last_y_axis"] = y
+        with open(json_file_path, "w") as file:
+            json.dump(data, file, indent=4)
         for widget in canvas.winfo_children():
             widget.destroy()
         for binding in ["<space>", "<Shift-space>", "<Up>", "<Down>", "n", "p","l", "<Escape>" ]:
             root.unbind(binding)
-        gc.collect()
 
     button_frame = tk.Frame(canvas, bg="#1E1E1E")
     button_frame.pack(side=tk.TOP)
@@ -284,14 +289,11 @@ def home(first_time):
     canvas.config(scrollregion=button_frame.bbox("all"))
 
     canvas.create_window((button_frame.winfo_reqwidth() / 5 + scrollbar.winfo_reqwidth() * 2, 0), window=button_frame, anchor="nw")
+    root.title(f"Comic Book Reader")
 
 home(True)
-root.title(f"Comic Book Reader")
 root.mainloop()
 
 for name in data:
     if name not in mangas:
         del data[name]
-
-with open(json_file_path, "w") as file:
-    json.dump(data, file, indent=4)
