@@ -9,15 +9,18 @@ import re
 import json
 import time
 
-def mouse_scroll(canvas, event):
+def mouse_scroll(canvas, event, my_listbox):
     if event.num == 5:
         direction = 1 
     elif event.num == 4:
         direction = -1
 
-    canvas.yview_scroll(direction, "units")
+    if event.widget != my_listbox:
+        canvas.yview_scroll(direction, "units")
+    else:
+        pass
 
-def space_scroll(canvas, event):
+def space_scroll(canvas, event, stop):
     for _ in range(8):
         canvas.yview_scroll(1, "units")
         canvas.update()
@@ -52,7 +55,7 @@ def on_listbox_select(my_listbox, files):
     selected_index = my_listbox.curselection()
     if selected_index:
         selected_index = int(selected_index[0])
-        load_chapter(root, canvas, files, selected_index, my_listbox)
+        load_chapter(root, canvas, files, selected_index, my_listbox, current_manga)
 
 def natural_sort_key(s):
     return [int(text) if text.isdigit() else text.lower() for text in re.split('([0-9]+)', s)]
@@ -125,12 +128,15 @@ def load_chapter(root, canvas, files, selected_index, my_listbox, name):
 def next_file(root, canvas, files, my_listbox):
     global current_file_index
     current_file_index = (current_file_index + 1) % len(files)
-    load_chapter(root, canvas, files, current_file_index, my_listbox)
+    load_chapter(root, canvas, files, current_file_index, my_listbox, current_manga)
 
 def previous_file(root, canvas, files, my_listbox):
     global current_file_index
     current_file_index = (current_file_index - 1) % len(files)
-    load_chapter(root, canvas, files, current_file_index, my_listbox)
+    load_chapter(root, canvas, files, current_file_index, my_listbox, current_manga)
+
+def on_listbox_mousewheel(event):
+    return 'break'
 
 current_manga = None
 
@@ -162,12 +168,16 @@ def load_manga(manga, name):
     image_files = load_images_from_zip(zip_file_path)
     loaded_images, total_image_height = load_all_images(zip_file_path, image_files)
     
-    root.bind("<space>", lambda event: space_scroll(canvas, event))  
+    root.bind("<Button-4>", lambda event: mouse_scroll(canvas, event, my_listbox))  
+    root.bind("<Button-5>", lambda event: mouse_scroll(canvas, event, my_listbox))  
+
+    root.bind("<space>", lambda event: space_scroll(canvas, event, False))  
+    root.bind("<KeyPress-space>", lambda event: space_scroll(canvas, event, True))
     root.bind("<Shift-space>", lambda event: shift_space_scroll(canvas, event))  
     root.bind("<Up>", lambda event: arrow_up_scroll(canvas, event))  
     root.bind("<Down>", lambda event: arrow_down_scroll(canvas, event))  
     root.bind("n", lambda event: next_file(root, canvas, files, my_listbox))
-    root.bind("p", lambda event: previous_file(root, canvas, files, my_listbox, current_file_index))  
+    root.bind("p", lambda event: previous_file(root, canvas, files, my_listbox))  
     root.bind("l", lambda event: toggle_listbox(my_listbox))
     root.bind("<Escape>", lambda event: home(False)) 
 
@@ -232,9 +242,6 @@ else:
 canvas = tk.Canvas(root, bg="#1E1E1E", highlightthickness=0)
 canvas.pack(fill=tk.BOTH, expand=True)
 
-root.bind("<Button-4>", lambda event: mouse_scroll(canvas, event))  
-root.bind("<Button-5>", lambda event: mouse_scroll(canvas, event))  
-
 try:
     with open(json_file_path, "r") as file:
         data = json.load(file)
@@ -254,6 +261,9 @@ def home(first_time):
         for binding in ["<space>", "<Shift-space>", "<Up>", "<Down>", "n", "p","l", "<Escape>" ]:
             root.unbind(binding)
 
+    root.bind("<Button-4>", lambda event: mouse_scroll(canvas, event, None))  
+    root.bind("<Button-5>", lambda event: mouse_scroll(canvas, event, None))  
+
     button_frame = tk.Frame(canvas, bg="#1E1E1E")
     button_frame.pack(side=tk.TOP)
 
@@ -267,12 +277,12 @@ def home(first_time):
         manga_button.config(command=lambda button=manga_button: load_pressed(button))
         manga_button.pack(side=tk.TOP, padx=5, pady=20)
 
-        manga_button.bind("<Button-4>", lambda event: mouse_scroll(canvas, event))  
-        manga_button.bind("<Button-5>", lambda event: mouse_scroll(canvas, event))  
-        button_container.bind("<Button-4>", lambda event: mouse_scroll(canvas, event))  
-        button_container.bind("<Button-5>", lambda event: mouse_scroll(canvas, event))
-        button_frame.bind("<Button-4>", lambda event: mouse_scroll(canvas, event))  
-        button_frame.bind("<Button-5>", lambda event: mouse_scroll(canvas, event))  
+        manga_button.bind("<Button-4>", lambda event: mouse_scroll(canvas, event, None))  
+        manga_button.bind("<Button-5>", lambda event: mouse_scroll(canvas, event, None))  
+        button_container.bind("<Button-4>", lambda event: mouse_scroll(canvas, event, None))  
+        button_container.bind("<Button-5>", lambda event: mouse_scroll(canvas, event, None))
+        button_frame.bind("<Button-4>", lambda event: mouse_scroll(canvas, event, None))  
+        button_frame.bind("<Button-5>", lambda event: mouse_scroll(canvas, event, None))  
 
         text_label = tk.Label(button_container, text=f"{name}", bg="#1E1E1E", fg="#ffffff", font="Helvetica 13 bold")
         text_label.pack(side=tk.TOP)
