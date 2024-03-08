@@ -14,7 +14,7 @@ def mouse_scroll(canvas, event, my_listbox):
         direction = 1 
     elif event.num == 4:
         direction = -1
-
+    print(canvas.yview())
     if event.widget != my_listbox:
         canvas.yview_scroll(direction, "units")
     else:
@@ -95,15 +95,14 @@ def show_images(canvas, loaded_images, total_image_height, name):
         if y_offset == 0:
             canvas.update()
         y_offset += img.height + 5
-
+    
     canvas.config(scrollregion=(0, 0, canvas.winfo_width(), y_offset))
     scrollbar = tk.Scrollbar(canvas, orient="vertical", command=canvas.yview)
     scrollbar.pack(side="right", fill="y")
     canvas.configure(yscrollcommand=scrollbar.set)
-    if "last_y_axis" in data[name]:
-        canvas.yview_moveto(data[name]["last_y_axis"])
 
     canvas.focus_set()
+
 
 def load_chapter(root, canvas, files, selected_index, my_listbox, name):
     global current_file_index
@@ -145,11 +144,7 @@ def load_manga(manga, name):
     current_manga = name
     file_path = os.path.abspath(manga)
     file_directory = os.path.dirname(file_path)
-    files = os.listdir(file_directory)
-    files = [file for file in files if file.endswith(".zip")]
-    files = [os.path.join(file_directory, name) for name in files]
-    files = [name.replace(".zip", "") for name in files]
-    files = sorted(files, key=natural_sort_key)
+    files = get_files(file_directory)
 
     current_file_index = files.index(file_path.replace(".zip", ""))
     zip_file_path = files[current_file_index] + ".zip"
@@ -205,13 +200,19 @@ else:
 
 mangas = os.listdir(os.path.join(path, "mangas"))
 
-def load_pressed(button):
-    name = button.cget("text")
-    files = os.listdir(os.path.join(path, "mangas", name))
+def get_files(manga_path):
+    files = os.listdir(manga_path)
     files = [file for file in files if file.endswith(".zip")]
-    files = [os.path.join(path, "mangas", name, file) for file in files]
+    files = [os.path.join(manga_path, file) for file in files]
     files = [name.replace(".zip", "") for name in files]
     files = sorted(files, key=natural_sort_key)
+
+    return files
+
+
+def load_pressed(button):
+    name = button.cget("text")
+    files = get_files((os.path.join(path, "mangas", name)))
 
     try:
         location = data[name]
@@ -286,6 +287,14 @@ def home(first_time):
 
         text_label = tk.Label(button_container, text=f"{name}", bg="#1E1E1E", fg="#ffffff", font="Helvetica 13 bold")
         text_label.pack(side=tk.TOP)
+
+        #if name in data:
+        #    last_chapter = os.path.splitext(os.path.basename(data[name]["path"]))[0].split()[-1]
+        #    text_label2 = tk.Label(button_container, text=f"Last Chapter: {last_chapter}", bg="#1E1E1E", fg="#ffffff", font="Helvetica 13 bold")
+        #    text_label2.pack(side=tk.TOP)
+        #else:
+        #    text_label2 = tk.Label(button_container, text=f"Last Chapter: 0", bg="#1E1E1E", fg="#ffffff", font="Helvetica 13 bold")
+        #    text_label2.pack(side=tk.TOP)
 
         while text_label.winfo_reqwidth() > manga_button.winfo_reqwidth():
             name = name[:-1]
