@@ -9,12 +9,25 @@ import re
 import json
 import time
 
+class current_file_index:
+    def set_current_file_index(self, new_index):
+        self.index = new_index
+
+    def return_current_file_index(self):
+        return self.index
+    
+    def add_current_file_index(self, files):
+        self.index += 1 % len(files)
+
+    def remove_current_file_index(self, files):
+        self.index -= 1 % len(files)
+
 def mouse_scroll(canvas, event, my_listbox):
     if event.num == 5:
         direction = 1 
     elif event.num == 4:
         direction = -1
-    print(canvas.yview())
+    #print(canvas.yview())
     if event.widget != my_listbox:
         canvas.yview_scroll(direction, "units")
     else:
@@ -105,8 +118,8 @@ def show_images(canvas, loaded_images, total_image_height, name):
 
 
 def load_chapter(root, canvas, files, selected_index, my_listbox, name):
-    global current_file_index
-    current_file_index = selected_index
+    index_object.set_current_file_index(selected_index)
+    current_file_index = index_object.return_current_file_index()
     my_listbox.selection_clear(0, tk.END)
     my_listbox.selection_set(current_file_index)
     zip_file_path = files[current_file_index] + ".zip"
@@ -125,19 +138,21 @@ def load_chapter(root, canvas, files, selected_index, my_listbox, name):
         pass
 
 def next_file(root, canvas, files, my_listbox):
-    global current_file_index
-    current_file_index = (current_file_index + 1) % len(files)
+    index_object.add_current_file_index(files)
+    current_file_index = index_object.return_current_file_index()
+
     load_chapter(root, canvas, files, current_file_index, my_listbox, current_manga)
 
 def previous_file(root, canvas, files, my_listbox):
-    global current_file_index
-    current_file_index = (current_file_index - 1) % len(files)
+    index_object.remove_current_file_index(files)
+    current_file_index = index_object.return_current_file_index()
     load_chapter(root, canvas, files, current_file_index, my_listbox, current_manga)
 
 def on_listbox_mousewheel(event):
     return 'break'
 
 current_manga = None
+index_object = current_file_index()
 
 def load_manga(manga, name):
     global current_manga
@@ -146,7 +161,9 @@ def load_manga(manga, name):
     file_directory = os.path.dirname(file_path)
     files = get_files(file_directory)
 
-    current_file_index = files.index(file_path.replace(".zip", ""))
+    index_object.set_current_file_index(files.index(file_path.replace(".zip", "")))
+    current_file_index = index_object.return_current_file_index()
+
     zip_file_path = files[current_file_index] + ".zip"
     
     my_listbox = tk.Listbox(root, selectmode=tk.SINGLE, selectbackground='lightblue', activestyle='none')
@@ -243,6 +260,9 @@ else:
 canvas = tk.Canvas(root, bg="#1E1E1E", highlightthickness=0)
 canvas.pack(fill=tk.BOTH, expand=True)
 
+root.bind("<Button-4>", lambda event: mouse_scroll(canvas, event, None))  
+root.bind("<Button-5>", lambda event: mouse_scroll(canvas, event, None))
+  
 try:
     with open(json_file_path, "r") as file:
         data = json.load(file)
@@ -259,11 +279,9 @@ def home(first_time):
             json.dump(data, file, indent=4)
         for widget in canvas.winfo_children():
             widget.destroy()
-        for binding in ["<space>", "<Shift-space>", "<Up>", "<Down>", "n", "p","l", "<Escape>" ]:
+        for binding in ["<space>", "<Shift-space>", "<Up>", "<Down>", "n", "p","l", "<Escape>"]:
             root.unbind(binding)
 
-    root.bind("<Button-4>", lambda event: mouse_scroll(canvas, event, None))  
-    root.bind("<Button-5>", lambda event: mouse_scroll(canvas, event, None))  
 
     button_frame = tk.Frame(canvas, bg="#1E1E1E")
     button_frame.pack(side=tk.TOP)
