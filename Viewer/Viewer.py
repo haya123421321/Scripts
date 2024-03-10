@@ -89,6 +89,7 @@ def load_all_images(zip_file_path, image_files):
                 img = img.convert("RGB")
                 loaded_images.append(img)
                 total_image_height += img.height + 5
+
     return loaded_images, total_image_height
 
 def show_images(canvas, loaded_images, total_image_height, name):
@@ -108,8 +109,8 @@ def show_images(canvas, loaded_images, total_image_height, name):
         if y_offset == 0:
             canvas.update()
         y_offset += img.height + 5
-    
-    canvas.config(scrollregion=(0, 0, canvas.winfo_width(), y_offset))
+
+    canvas.config(scrollregion=(0, 0, canvas.winfo_width(), total_image_height))
     scrollbar = tk.Scrollbar(canvas, orient="vertical", command=canvas.yview)
     scrollbar.pack(side="right", fill="y")
     canvas.configure(yscrollcommand=scrollbar.set)
@@ -128,6 +129,12 @@ def load_chapter(root, canvas, files, selected_index, my_listbox, name):
     on_canvas_configure(canvas, loaded_images, total_image_height, name)
 
     root.title(f"Comic Book Reader - {os.path.splitext(os.path.basename(zip_file_path))[0]}")
+
+    try:
+        if data[name]["path"] == zip_file_path and data[name]["last_y_axis"]:
+            canvas.yview_moveto(data[name]["last_y_axis"])
+    except:
+        canvas.yview_moveto(0)
 
     try:
         if zip_file_path != data[name]:
