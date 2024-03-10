@@ -49,9 +49,9 @@ except KeyboardInterrupt:
             else:
                 file.write("    for i in positions:\n")
 
-            file.write("        pyautogui.click(i)")
-
             if args.t is not None:
-                file.write(f"\n        time.sleep({args.t})")
+                file.write(f"        time.sleep({args.t})")
             elif args.r:
-                file.write(f"\n        time.sleep(float(t))")
+                file.write(f"        time.sleep(float(t))")
+            
+            file.write("\n        pyautogui.click(i)")
