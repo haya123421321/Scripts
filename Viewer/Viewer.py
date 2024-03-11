@@ -114,7 +114,7 @@ def show_images(canvas, loaded_images, total_image_height, name):
     scrollbar = tk.Scrollbar(canvas, orient="vertical", command=canvas.yview)
     scrollbar.pack(side="right", fill="y")
     canvas.configure(yscrollcommand=scrollbar.set)
-
+    
     canvas.focus_set()
 
 
@@ -133,8 +133,11 @@ def load_chapter(root, canvas, files, selected_index, my_listbox, name):
     try:
         if data[name]["path"] == zip_file_path and data[name]["last_y_axis"]:
             canvas.yview_moveto(data[name]["last_y_axis"])
+        else:
+            canvas.yview_moveto(0)
     except:
         canvas.yview_moveto(0)
+
 
     try:
         if zip_file_path != data[name]:
