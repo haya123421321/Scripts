@@ -22,9 +22,9 @@ else:
 
 options = ChromeOptions()
 options.add_argument("--headless=new")
+options.page_load_strategy = 'eager'
 
 driver = webdriver.Chrome(options=options)
-
 if os.path.isfile(dir_path + "/" "urls.txt"):
 	pass
 else:
@@ -35,6 +35,7 @@ urls = urls_file.read().split("\n")
 
 def animetv(url):
 	r = driver.get(url)
+	
 	soup = BeautifulSoup(driver.page_source, 'html.parser')
 	name = soup.find(class_="film-name dynamic-name").text
 	status = soup.find_all(class_="item-content")[3].text.strip()
