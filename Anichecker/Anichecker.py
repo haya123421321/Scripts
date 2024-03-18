@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver import ChromeOptions
 import os
+import time
 
 dir_path = os.path.dirname(__file__)
 
@@ -35,14 +36,25 @@ urls = urls_file.read().split("\n")
 
 def animetv(url):
 	r = driver.get(url)
-	
-	soup = BeautifulSoup(driver.page_source, 'html.parser')
-	name = soup.find(class_="film-name dynamic-name").text
-	status = soup.find_all(class_="item-content")[3].text.strip()
 
-	eps = soup.find(class_="episodes-ul").find_all("a")
-	new_ep = eps[-1]["href"]
-	return eps, name, new_ep, status
+	tries = 0
+	while True:
+		try:
+			if tries == 3:
+				return False
+				break
+
+			soup = BeautifulSoup(driver.page_source, 'html.parser')
+			name = soup.find(class_="film-name dynamic-name").text
+			status = soup.find_all(class_="item-content")[3].text.strip()
+
+			eps = soup.find(class_="episodes-ul").find_all("a")
+			new_ep = eps[-1]["href"]
+			tries += 1
+			return eps, name, new_ep, status
+			break
+		except:
+			time.sleep(1)
 
 for url in urls:	
 	if "9animetv.to" in url:
@@ -51,10 +63,13 @@ for url in urls:
 		print(f"The url is not a 9anime link: {url}")
 		continue
 	
-	eps = variables[0]
-	name = variables[1]
-	new_ep = variables[2]
-	status = variables[3]
+	if variables != False:
+		eps = variables[0]
+		name = variables[1]
+		new_ep = variables[2]
+		status = variables[3]
+	else:
+		continue
 
 	c.execute('SELECT * FROM an WHERE url="{}"'.format(url))
 	conn.commit()
