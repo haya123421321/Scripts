@@ -3,6 +3,7 @@
 import os
 import sys
 import tkinter as tk
+from tkinter import ttk
 from PIL import Image, ImageTk
 import zipfile
 import re
@@ -96,8 +97,13 @@ def show_images(canvas, loaded_images, total_image_height, name):
     for widget in canvas.winfo_children():
         widget.destroy()
 
+    progress_bar = tk.ttk.Progressbar(canvas, orient="horizontal", length=canvas.winfo_width())
+    progress_bar.pack(pady=10, side=tk.BOTTOM)
+    total_progress = 100 / len(loaded_images)
+
     y_offset = 0
-    for img in loaded_images:
+    for i,img in enumerate(loaded_images, 1):
+        progress_bar["value"] = i * total_progress
         if get_display_size(img)[0] > 1920:
             img.thumbnail((1920, get_display_size(img)[1]), Image.Resampling.LANCZOS)
         else:
@@ -110,6 +116,8 @@ def show_images(canvas, loaded_images, total_image_height, name):
             canvas.update()
         y_offset += img.height + 5
 
+    progress_bar.destroy()
+    canvas.update()
     canvas.config(scrollregion=(0, 0, canvas.winfo_width(), total_image_height))
     scrollbar = tk.Scrollbar(canvas, orient="vertical", command=canvas.yview)
     scrollbar.pack(side="right", fill="y")
