@@ -98,7 +98,7 @@ def show_images(canvas, loaded_images, total_image_height, name):
         widget.destroy()
 
     progress_bar = tk.ttk.Progressbar(canvas, orient="horizontal", length=canvas.winfo_width())
-    progress_bar.pack(pady=10, side=tk.BOTTOM)
+    progress_bar.pack(side=tk.BOTTOM)
     total_progress = 100 / len(loaded_images)
 
     y_offset = 0
