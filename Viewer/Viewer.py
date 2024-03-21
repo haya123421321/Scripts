@@ -113,11 +113,11 @@ def show_images(canvas, loaded_images, total_image_height, name):
         label.image = photo
         canvas.create_image(canvas.winfo_width() // 2, y_offset + img.height // 2, anchor=tk.CENTER, image=photo)
         if y_offset == 0:
-            canvas.update()
+            canvas.update_idletasks()
         y_offset += img.height + 5
 
     progress_bar.destroy()
-    canvas.update()
+    canvas.update_idletasks()
     canvas.config(scrollregion=(0, 0, canvas.winfo_width(), total_image_height))
     scrollbar = tk.Scrollbar(canvas, orient="vertical", command=canvas.yview)
     scrollbar.pack(side="right", fill="y")
