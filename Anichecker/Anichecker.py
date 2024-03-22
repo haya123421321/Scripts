@@ -82,7 +82,7 @@ for url in urls:
 		continue
 
 	if len(eps) > previous_ep:
-		t = f"{name} | Ep {len(eps)} | {status} | https://9animetv.to{new_ep}\n"
+		t = f"{name} | Ep {len(eps)} | https://9animetv.to{new_ep}\n"
 		open(file_path, "a").write("-"*len(t) + "\n" + t)
 		c.execute('UPDATE an SET ep = {} WHERE url = "{}"'.format(len(eps), url))
 		conn.commit()
