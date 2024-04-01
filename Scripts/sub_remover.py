@@ -1,7 +1,13 @@
 #!/usr/bin/python
-
 import subprocess
 import os
+
+try:
+    subprocess.run(["mkvmerge", "--version"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
+except subprocess.CalledProcessError:
+    print("mkvmerge is not installed on this system or not in PATH.")
+    exit()
+
 
 path = os.getcwd()
 files = os.listdir(path)
