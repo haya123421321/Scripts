@@ -2,7 +2,7 @@
 
 from requests import get, Session
 from sys import argv
-from os import makedirs, chdir
+from os import makedirs, chdir, get_terminal_size
 from os.path import isfile
 from bs4 import BeautifulSoup
 from queue import Queue
@@ -56,6 +56,8 @@ else:
             biggest_title = len(title)
         else:
             pass
+    biggest_title = min(biggest_title, get_terminal_size().columns - 8)
+
     t = 1
     for i,title,url in zip(range(len(titles)), titles, urls):
         if i < 10:
