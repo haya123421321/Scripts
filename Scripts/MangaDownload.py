@@ -26,76 +26,87 @@ if args.id is not None:
 else:
     search = input("Search: ")
     search = search.replace(" ", "_")
-    url = "https://manganato.com/search/story/" + search + "?page=" + str(page)
-    r = s.get(url)
-    r = BeautifulSoup(r.text, 'html.parser')
+    while True:
+        url = "https://manganato.com/search/story/" + search + "?page=" + str(page)
+        r = s.get(url)
+        r = BeautifulSoup(r.text, 'html.parser')
 
-    try:
-        results = r.find(class_="panel-search-story").find_all("div")
-    except:
-        print("cant find the specified manga/manhwa/manhua")
-    titles = []
-    urls = []
-    try:
-        pages = r.find(class_="page-blue page-last").text.strip("LAST()")
-    except:
-        pages = "1"
-    
-    print(f"{page}/{pages}")
-    
-    for result in results:
-        titles.append(result.h3.text.strip())
-        urls.append(result.a["href"])
+        try:
+            results = r.find(class_="panel-search-story").find_all("div")
+        except:
+            print("cant find the specified manga/manhwa/manhua")
+        titles = []
+        urls = []
+        try:
+            pages = r.find(class_="page-blue page-last").text.strip("LAST()")
+        except:
+            pages = "1"
+        
+        print(f"{page}/{pages}")
+        
+        for result in results:
+            titles.append(result.h3.text.strip())
+            urls.append(result.a["href"])
 
-    titles = list(dict.fromkeys(titles))
-    urls = list(dict.fromkeys(urls))
-    biggest_title = 0
-    
-    for title in titles:
-        if len(title) > biggest_title:
-            biggest_title = len(title)
-        else:
-            pass
-    biggest_title = min(biggest_title, get_terminal_size().columns - 8)
+        titles = list(dict.fromkeys(titles))
+        urls = list(dict.fromkeys(urls))
+        biggest_title = 0
+        
+        for title in titles:
+            if len(title) > biggest_title:
+                biggest_title = len(title)
+            else:
+                pass
 
-    t = 1
-    for i,title,url in zip(range(len(titles)), titles, urls):
-        if i < 10:
-            minus = "------"
-            space = "  "
-        else:
-            minus = "-----"
-            space = " "
-        minuses = "-"*biggest_title + "-"*len(str(i)) + minus + "-"
-        spaces_left = len(minuses) - len(title) - len(str(i)) - len(minus) - 1
-        menu = space + str(i) + " | " + title + " "*spaces_left + " |"
+        biggest_title = min(biggest_title, get_terminal_size().columns - 8)
 
-        while t == 1:
+        t = 1
+        for i,title,url in zip(range(len(titles)), titles, urls):
+            if i < 10:
+                minus = "------"
+                space = "  "
+            else:
+                minus = "-----"
+                space = " "
+            
+            if len(space + str(i) + " | " + title + "|") > get_terminal_size().columns:
+                while len(space + str(i) + " | " + title + "|") > get_terminal_size().columns:
+                    title = title[:-1]
+                title = title[:-4] + "...."
+                #print(len(title))
+
+            minuses = "-"*biggest_title + "-"*len(str(i)) + minus + "-"
+            spaces_left = len(minuses) - len(title) - len(str(i)) - len(minus)
+            menu = space + str(i) + " | " + title + " "*spaces_left + "|"
+
+            while t == 1:
+                print(minuses)
+                spaces_left2 = len(minuses) - len(" ID | Title") - 2
+                print(" ID | Title" + " "*spaces_left2 + " |")
+                print(minuses)
+                t = 0
+            print(menu)
             print(minuses)
-            spaces_left2 = len(minuses) - len(" ID | Title") - 2
-            print(" ID | Title" + " "*spaces_left2 + " |")
-            print(minuses)
-            t = 0
-        print(menu)
-        print(minuses)
 
-    print("\nNext page = n")
-    print("Previous page = p")        
-    
-    Value_number = input("\nSelect the series by ID: ")
-    if Value_number == "n":
-        if str(page) != pages:
-            page = int(page) + 1
+        print("\nNext page = n")
+        print("Previous page = p")        
+        
+        Value_number = input("\nSelect the series by ID: ")
+
+        if Value_number == "n":
+            if str(page) != pages:
+                page = int(page) + 1
+            else:
+                pass            
+        elif Value_number == "p":
+            if str(page) != "1":
+                page = int(page) - 1    
+            else:
+                pass
         else:
-            pass            
-    elif Value_number == "p":
-        if str(page) != "1":
-            page = int(page) - 1    
-        else:
-            pass
-    else:
-        url = urls[int(Value_number)]
-        args.search = None
+            url = urls[int(Value_number)]
+            args.search = None
+            break
     all_or_specific = input("Type the chapter number or press enter for all: ").split("-")
 
 r = s.get(url)
