@@ -48,11 +48,11 @@ def main():
             
             media_name = f"{post.title.replace(' ', '_')}." + media_url.split(".")[-1]
             media_name = media_name.replace("/", "").replace("[", "").replace("]", "")
+            media_name = truncate_filename(media_name)
             name_index = 2
             while os.path.isfile(os.path.join(cwd, "vids", media_name)):
                 media_name = f"{post.title.replace(' ', '_')} {name_index}." + media_url.split("?")[0].split(".")[-1]
                 name_index += 1
-            media_name = truncate_filename(media_name)
             media_path = os.path.join(cwd, "pics", media_name)
 
             headers = {'referer': f'{referer_url}'}
@@ -75,8 +75,8 @@ def main():
             media_url = post.url
             media_name = f"{post.title.replace(' ', '_')}." + media_url.split(".")[-1]
             media_name = media_name.replace("/", "").replace("[", "").replace("]", "")
-            name_index = 2
             media_name = truncate_filename(media_name)
+            name_index = 2
             while os.path.isfile(os.path.join(cwd, "vids", media_name)):
                 media_name = f"{post.title.replace(' ', '_')} {name_index}." + media_url.split("?")[0].split(".")[-1]
                 name_index += 1
@@ -97,11 +97,11 @@ def main():
             media_url = submission.media['reddit_video']['fallback_url']
             media_name = f"{post.title.replace(' ', '_')}.mp4"
             media_name = media_name.replace("/", "").replace("[", "").replace("]", "")
+            media_name = truncate_filename(media_name)
             name_index = 2
             while os.path.isfile(os.path.join(cwd, "vids", media_name)):
                 media_name = f"{post.title.replace(' ', '_')} {name_index}." + media_url.split("?")[0].split(".")[-1]
                 name_index += 1
-            media_name = truncate_filename(media_name)
             media_path = os.path.join(cwd, "vids", media_name)
 
             try:
@@ -122,12 +122,12 @@ def main():
                     media_url = item["s"]["u"]
                     media_name = f"{post.title.replace(' ', '_')}." + media_url.split("?")[0].split(".")[-1]
                     media_name = media_name.replace("/", "").replace("[", "").replace("]", "")
+                    media_name = truncate_filename(media_name)
                     name_index = 2
                     while os.path.isfile(os.path.join(cwd, "vids", media_name)):
                         media_name = f"{post.title.replace(' ', '_')} {name_index}." + media_url.split("?")[0].split(".")[-1]
                         name_index += 1
 
-                    media_name = truncate_filename(media_name)
                     media_path = os.path.join(cwd, "pics", media_name)
             
                 try:
