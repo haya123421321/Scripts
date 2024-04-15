@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 import praw
 import requests
 import os
@@ -27,33 +29,118 @@ q = Queue()
 
 for post in search_results:
     q.put(post)
+    print(post.url)
+
 
 os.makedirs(search_query, exist_ok=True)
+
+blacklisted = ["gfycat"]
 
 def main():
     while not q.empty():
         post = q.get()
-        if post.url.endswith(('.jpg', '.jpeg', '.png', '.gif')) and "imgur" not in post.url:
+        
+        if "imgur" in post.url:
+            media_url = post.url
+            media_url.replace("http://", "https://")
+            referer_url = "".join(media_url.split("/")[0] + "//" + media_url.split("/")[2].replace("i.", "") + "/" + media_url.split("/")[-1].split(".")[0])
+            download_url = "".join(media_url.split("/")[0] + "//" + media_url.split("/")[2].replace("i.", "") + "/download/" + media_url.split("/")[-1].split(".")[0]) + "/"
+            
+            media_name = f"{post.title.replace(' ', '_')}." + media_url.split(".")[-1]
+            media_name = media_name.replace("/", "").replace("[", "").replace("]", "")
+            name_index = 2
+            while os.path.isfile(os.path.join(cwd, "vids", media_name)):
+                media_name = f"{post.title.replace(' ', '_')} {name_index}." + media_url.split("?")[0].split(".")[-1]
+                name_index += 1
+            media_name = truncate_filename(media_name)
+            media_path = os.path.join(cwd, "pics", media_name)
+
+            headers = {'referer': f'{referer_url}'}
+            
+            try:
+                response = requests.get(download_url, headers=headers)
+                if len(response.content) == 0:
+                    continue
+                else:
+                    with open(media_path, 'wb') as f:
+                        f.write(response.content)
+                    
+                    print(f"Downloaded: {media_name}")
+                    continue
+            except:
+                continue
+
+        elif post.url.endswith(('.jpg', '.jpeg', '.png', '.gif', '.gifv')) and all(site not in post.url for site in blacklisted):
             os.makedirs(os.path.join(cwd, "pics"), exist_ok=True)
             media_url = post.url
             media_name = f"{post.title.replace(' ', '_')}." + media_url.split(".")[-1]
+            media_name = media_name.replace("/", "").replace("[", "").replace("]", "")
+            name_index = 2
             media_name = truncate_filename(media_name)
+            while os.path.isfile(os.path.join(cwd, "vids", media_name)):
+                media_name = f"{post.title.replace(' ', '_')} {name_index}." + media_url.split("?")[0].split(".")[-1]
+                name_index += 1
             media_path = os.path.join(cwd, "pics", media_name)
+            
+            try:
+                response = requests.get(media_url)
+                with open(media_path, 'wb') as f:
+                    f.write(response.content)
+                print(f"Downloaded: {media_name}")
+            except:
+                continue
+
+
         elif 'v.redd.it' in post.url:
             os.makedirs(os.path.join(cwd, "vids"), exist_ok=True)
             submission = reddit.submission(id=post.id)
             media_url = submission.media['reddit_video']['fallback_url']
             media_name = f"{post.title.replace(' ', '_')}.mp4"
+            media_name = media_name.replace("/", "").replace("[", "").replace("]", "")
+            name_index = 2
+            while os.path.isfile(os.path.join(cwd, "vids", media_name)):
+                media_name = f"{post.title.replace(' ', '_')} {name_index}." + media_url.split("?")[0].split(".")[-1]
+                name_index += 1
             media_name = truncate_filename(media_name)
             media_path = os.path.join(cwd, "vids", media_name)
-        else:
+
+            try:
+                response = requests.get(media_url)
+                with open(media_path, 'wb') as f:
+                    f.write(response.content)
+                print(f"Downloaded: {media_name}")
+            except:
+                continue
+
+            
+        elif post.url.split("/")[3] == "gallery":
+            submission = reddit.submission(url=post.url)
+            
+            images = []
+            if submission.is_gallery:
+                for item in submission.media_metadata.values():
+                    media_url = item["s"]["u"]
+                    media_name = f"{post.title.replace(' ', '_')}." + media_url.split("?")[0].split(".")[-1]
+                    media_name = media_name.replace("/", "").replace("[", "").replace("]", "")
+                    name_index = 2
+                    while os.path.isfile(os.path.join(cwd, "vids", media_name)):
+                        media_name = f"{post.title.replace(' ', '_')} {name_index}." + media_url.split("?")[0].split(".")[-1]
+                        name_index += 1
+
+                    media_name = truncate_filename(media_name)
+                    media_path = os.path.join(cwd, "pics", media_name)
+            
+                try:
+                    response = requests.get(media_url)
+                    with open(media_path, 'wb') as f:
+                        f.write(response.content)
+                    print(f"Downloaded: {media_name}")
+                except:
+                    continue
+
             continue
 
-        response = requests.get(media_url)
-        with open(media_path, 'wb') as f:
-            f.write(response.content)
 
-        print(f"Downloaded: {media_name}")
 
 for i in range(5):
     t_worker = threading.Thread(target=main)
