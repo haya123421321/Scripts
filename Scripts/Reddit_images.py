@@ -49,9 +49,11 @@ def main():
             media_name = f"{post.title.replace(' ', '_')}." + media_url.split(".")[-1]
             media_name = media_name.replace("/", "").replace("[", "").replace("]", "")
             media_name = truncate_filename(media_name)
+            media_path = os.path.join(cwd, "pics", media_name)
             name_index = 2
-            while os.path.isfile(os.path.join(cwd, "vids", media_name)):
+            while os.path.isfile(os.path.join(media_path)):
                 media_name = f"{post.title.replace(' ', '_')} {name_index}." + media_url.split("?")[0].split(".")[-1]
+                media_path = os.path.join(cwd, "pics", media_name)
                 name_index += 1
             media_path = os.path.join(cwd, "pics", media_name)
 
@@ -76,9 +78,11 @@ def main():
             media_name = f"{post.title.replace(' ', '_')}." + media_url.split(".")[-1]
             media_name = media_name.replace("/", "").replace("[", "").replace("]", "")
             media_name = truncate_filename(media_name)
+            media_path = os.path.join(cwd, "pics", media_name)
             name_index = 2
-            while os.path.isfile(os.path.join(cwd, "vids", media_name)):
+            while os.path.isfile(media_path):
                 media_name = f"{post.title.replace(' ', '_')} {name_index}." + media_url.split("?")[0].split(".")[-1]
+                media_path = os.path.join(cwd, "pics", media_name)
                 name_index += 1
             media_path = os.path.join(cwd, "pics", media_name)
             
@@ -98,11 +102,12 @@ def main():
             media_name = f"{post.title.replace(' ', '_')}.mp4"
             media_name = media_name.replace("/", "").replace("[", "").replace("]", "")
             media_name = truncate_filename(media_name)
-            name_index = 2
-            while os.path.isfile(os.path.join(cwd, "vids", media_name)):
-                media_name = f"{post.title.replace(' ', '_')} {name_index}." + media_url.split("?")[0].split(".")[-1]
-                name_index += 1
             media_path = os.path.join(cwd, "vids", media_name)
+            name_index = 2
+            while os.path.isfile(media_path):
+                media_name = f"{post.title.replace(' ', '_')} {name_index}." + media_url.split("?")[0].split(".")[-1]
+                media_path = os.path.join(cwd, "vids", media_name)
+                name_index += 1
 
             try:
                 response = requests.get(media_url)
@@ -115,28 +120,29 @@ def main():
             
         elif post.url.split("/")[3] == "gallery":
             submission = reddit.submission(url=post.url)
-            
-            images = []
+
             if submission.is_gallery:
                 for item in submission.media_metadata.values():
                     media_url = item["s"]["u"]
                     media_name = f"{post.title.replace(' ', '_')}." + media_url.split("?")[0].split(".")[-1]
                     media_name = media_name.replace("/", "").replace("[", "").replace("]", "")
                     media_name = truncate_filename(media_name)
+                    media_path = os.path.join(cwd, "pics", media_name)
                     name_index = 2
-                    while os.path.isfile(os.path.join(cwd, "vids", media_name)):
+                    while os.path.isfile(media_path):
                         media_name = f"{post.title.replace(' ', '_')} {name_index}." + media_url.split("?")[0].split(".")[-1]
+                        media_path = os.path.join(cwd, "pics", media_name)
                         name_index += 1
 
-                    media_path = os.path.join(cwd, "pics", media_name)
             
-                try:
-                    response = requests.get(media_url)
-                    with open(media_path, 'wb') as f:
-                        f.write(response.content)
-                    print(f"Downloaded: {media_name}")
-                except:
-                    continue
+                    try:
+                        response = requests.get(media_url)
+
+                        with open(media_path, 'wb') as f:
+                            f.write(response.content)
+                        print(f"Downloaded: {media_name}")
+                    except:
+                        continue
 
             continue
 
