@@ -97,8 +97,12 @@ def main():
 
         elif 'v.redd.it' in post.url:
             os.makedirs(os.path.join(cwd, "vids"), exist_ok=True)
-            submission = reddit.submission(id=post.id)
-            media_url = submission.media['reddit_video']['fallback_url']
+            try:
+                submission = reddit.submission(id=post.id)
+                media_url = submission.media['reddit_video']['fallback_url']
+            except:
+                print("couldnt get the submission media: " + post.url)
+                continue
             media_name = f"{post.title.replace(' ', '_')}.mp4"
             media_name = media_name.replace("/", "").replace("[", "").replace("]", "")
             media_name = truncate_filename(media_name)
