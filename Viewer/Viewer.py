@@ -25,14 +25,6 @@ class current_file_index:
     def remove_current_file_index(self, files):
         self.index -= 1 % len(files)
 
-def home_scroll(canvas, event):
-    if event.num == 5:
-        direction = 1 
-    elif event.num == 4:
-        direction = -1
-
-    canvas.yview_scroll(direction, "units")
-
 def mouse_scroll(canvas, event, my_listbox):
     if event.num == 5:
         direction = 1 
@@ -289,6 +281,7 @@ def load_manga(manga, name):
 
     load_chapter(root, canvas, files, current_file_index, my_listbox, name)
 
+    root.unbind("<Button-1>")
     root.bind("<Button-4>", lambda event: mouse_scroll(canvas, event, my_listbox))  
     root.bind("<Button-5>", lambda event: mouse_scroll(canvas, event, my_listbox))  
 
@@ -362,9 +355,9 @@ def save_y_axis_position():
 class home:
     def __init__(self, first_time, my_listbox):
         if not first_time:
-            images.return_loaded_images().clear()
             y = canvas.yview()[0]
             data[current_manga]["last_y_axis"] = y
+            images.return_loaded_images().clear()
             with open(json_file_path, "w") as file:
                 json.dump(data, file, indent=4)
             for widget in canvas.winfo_children():
@@ -375,8 +368,8 @@ class home:
             if my_listbox:
                 my_listbox.destroy()
 
-        root.bind("<Button-4>", lambda event: home_scroll(canvas, event)) 
-        root.bind("<Button-5>", lambda event: home_scroll(canvas, event))
+        root.bind("<Button-4>", lambda event: self.home_scroll(canvas, event)) 
+        root.bind("<Button-5>", lambda event: self.home_scroll(canvas, event))
         root.bind("<Button-1>", self.handle_click_outside_entry)
         
         self.scrollbar = tk.Scrollbar(canvas, orient="vertical", command=canvas.yview)
@@ -406,9 +399,37 @@ class home:
         canvas.create_window((self.button_frame.winfo_reqwidth() / 5 + self.scrollbar.winfo_reqwidth() * 2, self.search_bar.winfo_reqheight() + 21), window=button_frame, anchor="nw")
 
         root.title(f"Comic Book Reader")
+    
+    def home_scroll(self, canvas, event):
+        if event.num == 5:
+            direction = 1 
+        elif event.num == 4:
+            direction = -1
+
+        canvas.yview_scroll(direction, "units")
+
+    def search_menu_scroll(self,event):
+        if event.num == 5:
+            direction = 1 
+        elif event.num == 4:
+            direction = -1
+
+        if event.widget == canvas:
+            canvas.yview_scroll(direction, "units")
+        else:
+            self.canvas.yview_scroll(direction, "units")
 
     def download_menu(self):
-        self.menu = tk.Frame(canvas, bg="#2E2E2E", height=500, width=500)
+        if hasattr(self, 'menu') and self.menu.winfo_exists():
+            self.menu.destroy()
+            root.bind("<Button-4>", lambda event: self.home_scroll(canvas, event)) 
+            root.bind("<Button-5>", lambda event: self.home_scroll(canvas, event))
+            return
+        
+        root.bind("<Button-4>", lambda event: self.search_menu_scroll(event)) 
+        root.bind("<Button-5>", lambda event: self.search_menu_scroll(event))
+
+        self.menu = tk.Frame(canvas, bg="#2E2E2E")
         self.menu.place(relx=0.5, rely=0.45, anchor="center")
 
         self.menu_search_bar = tk.Entry(self.menu, width=50, font=("arial", 15))
@@ -421,6 +442,10 @@ class home:
 
         self.menu_button_frame = tk.Frame(self.menu, bg="#2E2E2E", highlightthickness=0)
         self.canvas.create_window((0, 0), window=self.menu_button_frame, anchor="nw")
+
+        self.menu_scrollbar = tk.Scrollbar(self.menu, orient="vertical", command=self.canvas.yview)
+        self.menu_scrollbar.pack(side="right", fill="y")
+        self.canvas.configure(yscrollcommand=self.menu_scrollbar.set)
 
     def manga_search(self, event):
         manga_to_search = self.menu_search_bar.get()
@@ -466,16 +491,15 @@ class home:
             button.grid(row=i, column=0, sticky="w")
             last_chapter_button.grid(row=i, column=1, sticky="e")
 
-        
         self.canvas.update_idletasks()
         self.canvas.config(scrollregion=self.canvas.bbox("all"))
-        self.scrollbar = tk.Scrollbar(canvas, orient="vertical", command=self.canvas.yview)
-        self.scrollbar.pack(side="right", fill="y")
-        self.canvas.configure(yscrollcommand=self.scrollbar.set)
 
     def handle_click_outside_entry(self, event):
-        if event.widget != self.search_bar:
-            self.button_frame.focus_set()
+        try:
+            if event.widget != self.search_bar and event.widget != self.search_menu:
+                self.button_frame.focus_set()
+        except:
+            pass
 
     def show_mangas(self, mangas, icons):
         buttons_per_row = 5
@@ -513,7 +537,7 @@ class home:
             button_container = tk.Frame(self.button_frame, bg="#171717")
             button_container.grid(row=i // 5, column=i % 5)
 
-            manga_button = tk.Button(button_container, image=icons[mangas.index(name)], text=name)
+            manga_button = tk.Button(button_container, image=icons[mangas.index(name)], text=name, borderwidth=0, highlightthickness=0)
             manga_button.config(command=lambda button=manga_button: load_pressed(button))
             manga_button.pack(side=tk.TOP, padx=5, pady=20)
 
@@ -534,7 +558,7 @@ class home:
         canvas.config(scrollregion=self.button_frame.bbox("all"))
         canvas.create_window((self.button_frame.winfo_reqwidth() / 5 + self.scrollbar.winfo_reqwidth() * 2, self.search_bar.winfo_reqheight() + 21), window=self.button_frame, anchor="nw")
 
-        print(results, end="\r")
+        #print(results, end="\r")
 
 
 root = tk.Tk()
