@@ -486,7 +486,7 @@ class home:
 
             while (button.winfo_reqwidth() + len_biggest_chapter) > self.canvas.winfo_width():
                 text = text[:-1]
-                button = tk.Button(self.menu_button_frame, text=text[:-5 - len_biggest_chapter] + "...", fg="white", font=("Arial Bold", 15), bg="#2E2E2E", bd=0, highlightthickness=0, borderwidth=0)
+                button = tk.Button(self.menu_button_frame, text=text[:-4] + "....", fg="white", font=("Arial Bold", 15), bg="#2E2E2E", bd=0, highlightthickness=0, borderwidth=0)
 
             button.grid(row=i, column=0, sticky="w")
             last_chapter_button.grid(row=i, column=1, sticky="e")
