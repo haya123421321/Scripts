@@ -398,6 +398,12 @@ class home:
         
         canvas.create_window((self.button_frame.winfo_reqwidth() / 5 + self.scrollbar.winfo_reqwidth() * 2, self.search_bar.winfo_reqheight() + 21), window=button_frame, anchor="nw")
 
+        # TEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEST
+        self.download_menu()
+        canvas.update_idletasks()
+        self.manga_search("solo")
+        # TEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEST
+
         root.title(f"Comic Book Reader")
     
     def home_scroll(self, canvas, event):
@@ -413,7 +419,7 @@ class home:
             direction = 1 
         elif event.num == 4:
             direction = -1
-
+        print
         if event.widget == canvas:
             canvas.yview_scroll(direction, "units")
         else:
@@ -432,10 +438,10 @@ class home:
         self.menu = tk.Frame(canvas, bg="#2E2E2E")
         self.menu.place(relx=0.5, rely=0.45, anchor="center")
 
-        self.menu_search_bar = tk.Entry(self.menu, width=50, font=("arial", 15))
+        self.menu_search_bar = tk.Entry(self.menu, width=40, font=("arial", 20))
         self.menu_search_bar.pack(pady=(30,70), padx=200)
         self.menu_search_bar.focus_set()
-        self.menu_search_bar.bind("<Return>", self.manga_search)
+        self.menu_search_bar.bind("<Return>", lambda event: self.manga_search(self.menu_search_bar.get()))
 
         self.canvas = tk.Canvas(self.menu, bg="#2E2E2E", height=400, width=500, highlightthickness=0)
         self.canvas.pack(side="left", fill="both", expand=True)
@@ -447,14 +453,21 @@ class home:
         self.menu_scrollbar.pack(side="right", fill="y")
         self.canvas.configure(yscrollcommand=self.menu_scrollbar.set)
 
-    def manga_search(self, event):
-        manga_to_search = self.menu_search_bar.get()
+        #for i in range(20):
+        #    b = tk.Button(self.menu_button_frame, text=i, fg="white", font=("Arial Bold", 20), bg="#2E2E2E", bd=0, highlightthickness=0, borderwidth=0)
+        #    b.pack()
+
+    def manga_search(self, promt):
+        for widget in self.menu_button_frame.winfo_children():
+            widget.destroy()
+        
+        manga_to_search = promt
         manga_to_search = manga_to_search.replace(" ", "_")
         page = 1
         url = "https://manganato.com/search/story/" + manga_to_search + "?page=" + str(page)
         r = requests.get(url)
         r = BeautifulSoup(r.text, 'html.parser')
-        
+
         try:
             results = r.find(class_="panel-search-story").find_all("div")
         except:
@@ -468,31 +481,93 @@ class home:
         for result in results:
             titles.append(result.h3.text.strip())
             urls.append(result.a["href"])
+
             last_chapter.append(result.find(class_="item-chapter a-h text-nowrap")["href"])
             if len(result.find(class_="item-chapter a-h text-nowrap")["href"].split("-")[-1]) > len_biggest_chapter:
                 len_biggest_chapter = len(result.find(class_="item-chapter a-h text-nowrap")["href"].split("-")[-1])
                 biggest_chapter = result.find(class_="item-chapter a-h text-nowrap")["href"].split("-")[-1]
 
-        titles = list(dict.fromkeys(titles))
-        urls = list(dict.fromkeys(urls))
+        self.titles = list(dict.fromkeys(titles))
+        self.urls = list(dict.fromkeys(urls))
         last_chapters = list(dict.fromkeys(last_chapter))
 
-        len_biggest_chapter = tk.Button(self.menu_button_frame, text=biggest_chapter, fg="white", font=("Arial Bold", 15), bg="#2E2E2E", bd=0, highlightthickness=0, borderwidth=0)
+        font = 20
+
+        len_biggest_chapter = tk.Label(self.canvas, text=biggest_chapter, fg="white", font=("Arial Bold", font), bg="#2E2E2E", bd=0, highlightthickness=0, borderwidth=0)
         len_biggest_chapter = len_biggest_chapter.winfo_reqwidth()
 
-        for i,(text,last_chapter) in enumerate(zip(titles, last_chapters)):
-            button = tk.Button(self.menu_button_frame, text=text, fg="white", font=("Arial Bold", 15), bg="#2E2E2E", bd=0, highlightthickness=0, borderwidth=0)
-            last_chapter_button = tk.Button(self.menu_button_frame, text=last_chapter.split("-")[-1], fg="white", font=("Arial Bold", 15), bg="#2E2E2E", bd=0, highlightthickness=0, borderwidth=0)
+        for i,(text,last_chapter) in enumerate(zip(self.titles, last_chapters)):
+            button = tk.Button(self.menu_button_frame, text=text, fg="white", font=("Arial Bold", font), bg="#2E2E2E", bd=0, highlightthickness=0, borderwidth=0, anchor="w")
+            button.config(command=lambda button=button: self.manga_info(button))
+            last_chapter_button = tk.Label(self.menu_button_frame, text=last_chapter.split("-")[-1], fg="white", font=("Arial Bold", font), bg="#2E2E2E", bd=0, highlightthickness=0, borderwidth=0)
 
-            while (button.winfo_reqwidth() + len_biggest_chapter) > self.canvas.winfo_width():
+            while (button.winfo_reqwidth() + len_biggest_chapter + self.menu_scrollbar.winfo_width()) > self.canvas.winfo_width():
                 text = text[:-1]
-                button = tk.Button(self.menu_button_frame, text=text[:-4] + "....", fg="white", font=("Arial Bold", 15), bg="#2E2E2E", bd=0, highlightthickness=0, borderwidth=0)
+                button = tk.Button(self.menu_button_frame, text=text[:-4] + "....", fg="white", font=("Arial Bold", font), bg="#2E2E2E", bd=0, highlightthickness=0, borderwidth=0)
 
-            button.grid(row=i, column=0, sticky="w")
+            button.grid(row=i, column=0, sticky="we")
             last_chapter_button.grid(row=i, column=1, sticky="e")
 
         self.canvas.update_idletasks()
         self.canvas.config(scrollregion=self.canvas.bbox("all"))
+
+    def manga_info(self, button):
+        title = button.cget("text")
+        index = self.titles.index(title)
+
+        r = requests.get(self.urls[index])
+        soup = BeautifulSoup(r.text, "html.parser")
+
+        author = soup.find(class_="variations-tableInfo").find_all("tr")[1].find(class_="table-value").text.strip()
+        status = soup.find(class_="variations-tableInfo").find_all("tr")[2].find(class_="table-value").text.strip()
+        genres = soup.find(class_="variations-tableInfo").find_all("tr")[3].find(class_="table-value").text.strip()
+        all_chapters = soup.find(class_="row-content-chapter").find_all("li")
+
+        info_canvas = tk.Canvas(canvas, bg="#2E2E2E", highlightthickness=0, height=self.menu.winfo_height(), width=self.menu.winfo_width())
+        info_canvas.place(relx=0.5, rely=0.45, anchor=tk.CENTER)
+        
+        info_frame = tk.Frame(info_canvas, bg="#2E2E2E")
+        info_canvas.create_window((0, 0), window=info_frame, anchor="nw")
+
+        title_label = tk.Label(info_frame, text=title, padx=15, pady=15, font=("Helvetica bold", 25), bg="#2E2E2E", fg="white")
+        author_label = tk.Label(info_frame, text="Author:      " + author, padx=10, pady=5, font=("Helvetica", 17), bg="#2E2E2E", fg="white")
+        status_label = tk.Label(info_frame, text="Status:       " + status, padx=10, pady=5, font=("Helvetica", 17), bg="#2E2E2E", fg="white")
+        genres_label = tk.Label(info_frame, text="Genres:     " + genres, padx=10, pady=5, font=("Helvetica", 17), bg="#2E2E2E", fg="white")
+
+        title_label.pack(anchor="w")
+        author_label.pack(anchor="w")
+        status_label.pack(anchor="w")
+        genres_label.pack(anchor="w")
+
+        chapters_frame = tk.Frame(info_frame, bg="#2E2E2E", highlightbackground="white", highlightthickness=2, bd=0)
+        chapters_frame.pack(side="left", pady=(30,0), fill="both", expand=True)
+
+        Chapter_name = tk.Label(chapters_frame, text="Chapter name" + " "*97, padx=10, pady=5, font=("Helvetica bold", 17), bg="#2E2E2E", fg="white", anchor="w", highlightthickness=2, bd=0)
+        View = tk.Label(chapters_frame, text="Views  ", padx=10, pady=5, font=("Helvetica bold", 17), bg="#2E2E2E", fg="white", highlightthickness=2, bd=0)
+        Uploaded = tk.Label(chapters_frame, text="Uploaded", padx=10, pady=5, font=("Helvetica bold", 17), bg="#2E2E2E", fg="white", highlightthickness=2, bd=0)
+
+        Chapter_name.grid(row=0, column=0, sticky="w")
+        View.grid(row=0, column=1, sticky="e")
+        Uploaded.grid(row=0, column=2, sticky="e")
+
+        for i,chapter in enumerate(all_chapters):
+            chapter_button = tk.Button(chapters_frame, text=chapter.a.text, padx=10, pady=5, font=("Helvetica bold", 17), bg="#2E2E2E", fg="white", anchor="w", highlightthickness=0, borderwidth=0)
+            chapter_button.grid(row=i + 1, column=0, sticky="we")
+
+            view_button = tk.Label(chapters_frame, text=chapter.span.text, padx=10, pady=5, font=("Helvetica bold", 17), bg="#2E2E2E", fg="white", anchor="w", highlightthickness=0, borderwidth=0)
+            view_button.grid(row=i + 1, column=1, sticky="e")
+
+            uploaded_button = tk.Label(chapters_frame, text=chapter.find(class_="chapter-time text-nowrap").text, padx=10, pady=5, font=("Helvetica bold", 17), bg="#2E2E2E", fg="white", anchor="w", highlightthickness=0, borderwidth=0)
+            uploaded_button.grid(row=i + 1, column=2, sticky="e")
+
+        scrollbar = tk.Scrollbar(info_canvas, orient="vertical", command=info_canvas.yview)
+        scrollbar.place(relx=1, rely=0, relheight=1, anchor=tk.NE)
+
+        info_canvas.configure(yscrollcommand=scrollbar.set)
+
+        info_frame.update_idletasks()
+        info_canvas.config(scrollregion=info_canvas.bbox("all"))
+
 
     def handle_click_outside_entry(self, event):
         try:
