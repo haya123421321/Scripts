@@ -11,7 +11,6 @@ from time import sleep
 import shutil
 import argparse
 
-
 search_parser = argparse.ArgumentParser()
 
 search_parser.add_argument("--id")
@@ -143,7 +142,7 @@ r = s.get(Icon)
 open("icon.jpg", "wb").write(r.content)
 
 Total_chapters = len(chapters)
-num_digits = len(str(Total_chapters))
+num_digits = len(str(len(chapters)))
 
 for index,i in enumerate(chapters, start=1):
     chapter_name  = Title + " " + i.split("/")[4].split("-")[1].zfill(num_digits)
