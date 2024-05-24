@@ -69,9 +69,6 @@ func main() {
 		chapterURLs <- chapterURL
 	}
 
-	//	for _, url := range chapters {
-	//		download_chapter(url, name, manga_path)
-	//	}
 	close(chapterURLs)
 	wg.Wait()
 
