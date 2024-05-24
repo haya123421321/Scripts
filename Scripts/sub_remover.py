@@ -53,6 +53,7 @@ def main():
         mkvmerge_output = subprocess.run(["mkvmerge" , "-o", f"{os.path.join(path, file)}CACHE", "-s", choice, f"{os.path.join(path, file)}"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         subprocess.run(["mv", f"{os.path.join(path, file)}CACHE", os.path.join(path, file)])
         print(f"✅ {file} done")
+        q.task_done()
 
 t_list = []
 for i in range(threads):
