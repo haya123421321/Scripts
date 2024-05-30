@@ -1,8 +1,9 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"path"
@@ -15,11 +16,17 @@ import (
 )
 
 func main() {
-	if len(os.Args) < 2 {
-		fmt.Println("Usage: ./Script <URL>")
-		return
+	mangas_found, mangas_url_found := search()
+
+	for index, title := range mangas_found {
+		fmt.Println(index, title)
 	}
-	url := os.Args[1]
+
+	var id int
+	fmt.Print("\nId: ")
+	fmt.Scan(&id)
+
+	url := mangas_url_found[id]
 
 	resp, err := http.Get(url)
 	if err != nil {
@@ -142,15 +149,58 @@ func downloadImage(index int, imageURL, chapterDir string) {
 	}
 	defer resp.Body.Close()
 
-	data, err := ioutil.ReadAll(resp.Body)
+	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	err = ioutil.WriteFile(path.Join(chapterDir, strconv.Itoa(index)+".jpg"), data, 0600)
+	err = os.WriteFile(path.Join(chapterDir, strconv.Itoa(index)+".jpg"), data, 0600)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
+}
+
+func search() ([]string, []string) {
+	var Search string
+	fmt.Print("Search: ")
+	reader := bufio.NewReader(os.Stdin)
+	Search, _ = reader.ReadString('\n')
+	Search = strings.TrimSpace(Search)
+
+	r, err := http.Get("https://manganato.com/search/story/" + strings.Replace(Search, " ", "_", -1))
+	if err != nil {
+		fmt.Println("Failed to search for:", Search)
+		return nil, nil
+	}
+	defer r.Body.Close()
+
+	search_doc, err := goquery.NewDocumentFromReader(r.Body)
+	if err != nil {
+		fmt.Println(err)
+		return nil, nil
+	}
+
+	var mangas_found []string
+	var mangas_url_found []string
+
+	search_doc.Find("div.panel-search-story").Find("div").Each(func(i int, s *goquery.Selection) {
+		found := false
+		title, _ := s.Find("a").Attr("title")
+
+		for _, check := range mangas_found {
+			if title == check {
+				found = true
+				break
+			}
+		}
+		if !found {
+			mangas_found = append(mangas_found, title)
+			url, _ := s.Find("a").Attr("href")
+			mangas_url_found = append(mangas_url_found, url)
+		}
+	})
+
+	return mangas_found, mangas_url_found
 }
