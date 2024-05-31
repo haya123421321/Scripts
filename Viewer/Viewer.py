@@ -4,6 +4,7 @@ import os
 import sys
 import tkinter as tk
 from tkinter import ttk
+from tkinter import font as tkFont
 from PIL import Image, ImageTk
 import zipfile
 import re
@@ -11,6 +12,9 @@ import json
 import time
 import requests
 from bs4 import BeautifulSoup
+from queue import Queue
+from threading import Thread
+import shutil
 
 class current_file_index:
     def set_current_file_index(self, new_index):
@@ -357,6 +361,21 @@ def save_y_axis_position():
             data[current_manga]["last_y_axis"] = y
             with open(json_file_path, "w") as file:
                 json.dump(data, file, indent=4)
+
+        keys_to_delete = []
+        for name in data:
+            if name not in mangas:
+                keys_to_delete.append(name)
+       
+        if len(keys_to_delete) >= 1:
+            for key in keys_to_delete:
+                del data[key]
+            try:
+                with open(json_file_path, "w") as file:
+                    json.dump(data, file, indent=4)
+            except Exception as e:
+                print(f"Error while saving JSON file: {e}")
+
         root.destroy()
 
 class home:
@@ -393,8 +412,9 @@ class home:
         button_frame = tk.Frame(canvas, bg="#171717")
         button_frame.pack(side=tk.TOP)
         self.button_frame = button_frame
-
-        self.show_mangas(mangas, icons)
+        
+        self.icons = [load_image(os.path.join(path, "mangas", name, "icon.jpg"), icons_height) for name in mangas]
+        self.show_mangas(mangas, self.icons)
         
         canvas.update_idletasks()
         
@@ -406,9 +426,9 @@ class home:
         canvas.create_window((self.button_frame.winfo_reqwidth() / 5 + self.scrollbar.winfo_reqwidth() * 2, self.search_bar.winfo_reqheight() + 21), window=button_frame, anchor="nw")
 
         # TEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEST
-        self.download_menu()
-        canvas.update_idletasks()
-        self.manga_search("solo")
+        #self.download_menu()
+        #canvas.update_idletasks()
+        #self.manga_search("solo")
         # TEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEST
 
         root.title(f"Comic Book Reader")
@@ -477,7 +497,7 @@ class home:
             results = r.find(class_="panel-search-story").find_all("div")
         except:
             print("cant find the specified manga/manhwa/manhua")
-        
+
         titles = []
         urls = []
         last_chapter = []
@@ -486,8 +506,12 @@ class home:
         for result in results:
             titles.append(result.h3.text.strip())
             urls.append(result.a["href"])
+            try:
+                last_chapter.append(result.find(class_="item-chapter a-h text-nowrap")["href"])
+            except:
+                last_chapter.append(f"{result.a["href"]}-0")
+                continue
 
-            last_chapter.append(result.find(class_="item-chapter a-h text-nowrap")["href"])
             if len(result.find(class_="item-chapter a-h text-nowrap")["href"].split("-")[-1]) > len_biggest_chapter:
                 len_biggest_chapter = len(result.find(class_="item-chapter a-h text-nowrap")["href"].split("-")[-1])
                 biggest_chapter = result.find(class_="item-chapter a-h text-nowrap")["href"].split("-")[-1]
@@ -517,8 +541,8 @@ class home:
         self.canvas.config(scrollregion=self.canvas.bbox("all"))
 
     def manga_info(self, button):
-        title = button.cget("text")
-        index = self.titles.index(title)
+        self.title = button.cget("text")
+        index = self.titles.index(self.title)
 
         r = requests.get(self.urls[index])
         soup = BeautifulSoup(r.text, "html.parser")
@@ -526,7 +550,14 @@ class home:
         author = soup.find(class_="variations-tableInfo").find_all("tr")[1].find(class_="table-value").text.strip()
         status = soup.find(class_="variations-tableInfo").find_all("tr")[2].find(class_="table-value").text.strip()
         genres = soup.find(class_="variations-tableInfo").find_all("tr")[3].find(class_="table-value").text.strip()
-        all_chapters = soup.find(class_="row-content-chapter").find_all("li")
+        try:
+            all_chapters = soup.find(class_="row-content-chapter").find_all("li")
+            self.chapterss = [chapter.a["href"] for chapter in all_chapters]
+        except:
+            self.chapterss = []
+            pass
+
+        self.icon = soup.find(class_="info-image").img["src"]
 
         self.info_canvas = tk.Canvas(canvas, bg="#2E2E2E", highlightthickness=0, height=self.menu.winfo_height(), width=self.menu.winfo_width())
         self.info_canvas.place(relx=0.5, rely=0.45, anchor=tk.CENTER)
@@ -537,7 +568,11 @@ class home:
         info_frame = tk.Frame(self.info_canvas, bg="#2E2E2E")
         self.info_canvas.create_window((0, 0), window=info_frame, anchor="nw")
 
-        title_label = tk.Label(info_frame, text=title, padx=15, pady=15, font=("Helvetica bold", 25), bg="#2E2E2E", fg="white")
+        download_all_button = tk.Button(info_frame, text="Download All", padx=10, pady=5, font=("Helvetica bold", 17), bg="#2E2E2E", fg="white", anchor="w")
+        download_all_button.config(command=lambda: Thread(target=self.download_single, args=(self.chapterss[::-1],)).start())
+        download_all_button.pack(anchor="e", pady=15, padx=10)
+
+        title_label = tk.Label(info_frame, text=self.title, padx=15, pady=15, font=("Helvetica bold", 25), bg="#2E2E2E", fg="white")
         author_label = tk.Label(info_frame, text="Author:      " + author, padx=10, pady=5, font=("Helvetica", 17), bg="#2E2E2E", fg="white")
         status_label = tk.Label(info_frame, text="Status:       " + status, padx=10, pady=5, font=("Helvetica", 17), bg="#2E2E2E", fg="white")
         genres_label = tk.Label(info_frame, text="Genres:     " + genres, padx=10, pady=5, font=("Helvetica", 17), bg="#2E2E2E", fg="white")
@@ -558,15 +593,17 @@ class home:
         View.grid(row=0, column=1, sticky="e")
         Uploaded.grid(row=0, column=2, sticky="e")
 
-        for i,chapter in enumerate(all_chapters):
-            chapter_button = tk.Button(chapters_frame, text=chapter.a.text, padx=10, pady=5, font=("Helvetica bold", 17), bg="#2E2E2E", fg="white", anchor="w", highlightthickness=0, borderwidth=0)
-            chapter_button.grid(row=i + 1, column=0, sticky="we")
+        if len(self.chapterss) > 1:
+            for i,chapter in enumerate(all_chapters):
+                chapter_button = tk.Button(chapters_frame, text=chapter.a.text, padx=10, pady=5, font=("Helvetica bold", 17), bg="#2E2E2E", fg="white", anchor="w", highlightthickness=0, borderwidth=0)
+                chapter_button.config(command=lambda i=i: Thread(target=self.download_single, args=([self.chapterss[i]],)).start())
+                chapter_button.grid(row=i + 1, column=0, sticky="we")
 
-            view_button = tk.Label(chapters_frame, text=chapter.span.text, padx=10, pady=5, font=("Helvetica bold", 17), bg="#2E2E2E", fg="white", anchor="w", highlightthickness=0, borderwidth=0)
-            view_button.grid(row=i + 1, column=1, sticky="e")
+                view_button = tk.Label(chapters_frame, text=chapter.span.text, padx=10, pady=5, font=("Helvetica bold", 17), bg="#2E2E2E", fg="white", anchor="w", highlightthickness=0, borderwidth=0)
+                view_button.grid(row=i + 1, column=1, sticky="e")
 
-            uploaded_button = tk.Label(chapters_frame, text=chapter.find(class_="chapter-time text-nowrap").text, padx=10, pady=5, font=("Helvetica bold", 17), bg="#2E2E2E", fg="white", anchor="w", highlightthickness=0, borderwidth=0)
-            uploaded_button.grid(row=i + 1, column=2, sticky="e")
+                uploaded_button = tk.Label(chapters_frame, text=chapter.find(class_="chapter-time text-nowrap").text, padx=10, pady=5, font=("Helvetica bold", 17), bg="#2E2E2E", fg="white", anchor="w", highlightthickness=0, borderwidth=0)
+                uploaded_button.grid(row=i + 1, column=2, sticky="e")
 
         scrollbar = tk.Scrollbar(self.info_canvas, orient="vertical", command=self.info_canvas.yview)
         scrollbar.place(relx=1, rely=0, relheight=1, anchor=tk.NE)
@@ -576,6 +613,95 @@ class home:
         info_frame.update_idletasks()
         self.info_canvas.config(scrollregion=self.info_canvas.bbox("all"))
 
+    def download_single(self, urls):
+        num_digits = len(str(len(self.chapterss)))
+        os.makedirs(os.path.join(path, "mangas", self.title), exist_ok=True) 
+
+        if os.path.isfile(os.path.join(path, "mangas", self.title, "icon.jpg")):
+            pass
+        else:
+            r = requests.get(self.icon)
+            open(os.path.join(path, "mangas", self.title, "icon.jpg"), "wb").write(r.content)
+
+        mangas = os.listdir(os.path.join(path, "mangas"))
+        
+        self.icons = [load_image(os.path.join(path, "mangas", name, "icon.jpg"), icons_height) for name in mangas]
+        self.show_mangas(mangas, self.icons)
+
+
+        self.image = os.path.join(path, "mangas", self.title, "icon.jpg")
+        
+        jpeg_image = Image.open(self.image)
+        jpeg_image = jpeg_image.resize((250, 100))
+
+        png_image = jpeg_image.convert("RGBA")
+        self.image = ImageTk.PhotoImage(png_image)
+
+        progress_button = tk.Button(canvas, text=f"{self.title}\n0%", width=20, borderwidth=0, highlightthickness=0, font=("arial", 18), bg="red", anchor="center")
+        progress_button.pack(anchor="e", padx=20, pady=5)
+
+        s = requests.Session()
+        
+        progress = 0
+        what_to_go_up_with = 100 / len(urls)
+        check_with_this = 25
+        colors = ["yellow", "dark green", "light green", "light green"]
+
+        for url in urls:
+            chapter_name  = self.title + " " + url.split("/")[4].split("-")[1].zfill(num_digits)
+            if os.path.isfile(os.path.join(path, "mangas", self.title, chapter_name + ".zip")):
+                progress += what_to_go_up_with
+                progress_button.config(text=f"{self.title}\n{int(progress)}%")
+                continue
+
+            os.makedirs(os.path.join(path, "mangas", self.title, chapter_name), exist_ok=True)
+
+            q = Queue()
+            names = Queue()
+            r = s.get(url)
+            r = BeautifulSoup(r.text, 'html.parser')
+
+            links = r.find(class_="container-chapter-reader").find_all("img")
+            headers = {
+            "DNT" : "1",
+            "Referer" : "https://readmanganato.com/",
+            "sec-ch-ua-mobile" : "?0",
+            "sec-ch-ua-platform" : "Linux",
+            "User-Agent" : "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36",
+            }
+
+            for url in links:
+                q.put(url["src"])
+            for name in range(len(links)):
+                names.put(name)
+
+            def downloadlink():
+                while not q.empty():
+                    link = q.get()
+                    name = names.get()
+                    r = s.get(link, headers=headers, stream=True)
+                    open(os.path.join(path, "mangas", self.title, chapter_name, str(name)) + ".jpg", "wb").write(r.content)
+                    q.task_done()
+
+            def download_all():
+                num_threads = min(20, len(links))
+                for i in range(num_threads):
+                    t_worker = Thread(target=downloadlink)
+                    t_worker.start()
+                q.join()
+
+            download_all()
+            shutil.make_archive(os.path.join(path, "mangas", self.title, chapter_name), "zip", os.path.join(path, "mangas", self.title, chapter_name))
+            shutil.rmtree(os.path.join(path, "mangas", self.title, chapter_name))
+            progress += what_to_go_up_with
+            progress_button.config(text=f"{self.title}\n{int(progress)}%")
+
+            if progress > check_with_this:
+                progress_button.config(bg=colors[0])
+                del colors[0]
+                check_with_this += 25
+
+        progress_button.destroy()
 
     def handle_click_outside_entry(self, event):
         try:
@@ -583,9 +709,18 @@ class home:
                 self.button_frame.focus_set()
         except:
             pass
+    
+    def right_click_menu(self, event, title):
+       self.my_menu.tk_popup(event.x_root, event.y_root)
+       self.title = title
+
+    def delete(self):
+        shutil.rmtree(os.path.join(path, "mangas", self.title))
 
     def show_mangas(self, mangas, icons):
         buttons_per_row = 5
+        self.my_menu = tk.Menu(root, tearoff=False, bg="#171717", fg="red")
+        self.my_menu.add_command(label="Delete", font=("", 15), command=self.delete) 
 
         for i, (name, icon) in enumerate(zip(mangas, icons)):
             button_container = tk.Frame(self.button_frame, bg="#171717")
@@ -594,6 +729,7 @@ class home:
             manga_button = tk.Button(button_container, image=icon, text=name, borderwidth=0, highlightthickness=0)
             manga_button.config(command=lambda button=manga_button: load_pressed(button))
             manga_button.pack(side=tk.TOP, padx=5, pady=20)
+            manga_button.bind("<Button-3>", lambda event, button = manga_button.cget("text"): self.right_click_menu(event,button))
 
             text_label = tk.Label(button_container, text=f"{name}", bg="#171717", fg="#ffffff", font="Helvetica 13 bold")
             text_label.pack(side=tk.TOP)
@@ -609,6 +745,11 @@ class home:
             while text_label.winfo_reqwidth() > manga_button.winfo_reqwidth():
                 name = name[:-1]
                 text_label.config(text=name[:len(name) - 4] + "....")
+
+            while text_label2.winfo_reqwidth() > manga_button.winfo_reqwidth():
+                last_chapter = last_chapter[:-1]
+                text_label2.config(text=f"Last Chapter: {last_chapter[:len(last_chapter) - 4]}" + "....")
+
     
     def search_result(self):
         for widget in self.button_frame.winfo_children():
@@ -620,7 +761,7 @@ class home:
             button_container = tk.Frame(self.button_frame, bg="#171717")
             button_container.grid(row=i // 5, column=i % 5)
 
-            manga_button = tk.Button(button_container, image=icons[mangas.index(name)], text=name, borderwidth=0, highlightthickness=0)
+            manga_button = tk.Button(button_container, image=self.icons[mangas.index(name)], text=name, borderwidth=0, highlightthickness=0)
             manga_button.config(command=lambda button=manga_button: load_pressed(button))
             manga_button.pack(side=tk.TOP, padx=5, pady=20)
 
@@ -660,11 +801,7 @@ try:
 except json.decoder.JSONDecodeError:
     data = {}
 
-icons = [load_image(os.path.join(path, "mangas", name, "icon.jpg"), canvas.winfo_reqwidth()) for name in mangas]
+icons_height = canvas.winfo_reqwidth()
 
 home(True, None)
 root.mainloop()
-
-for name in data:
-    if name not in mangas:
-        del data[name]
