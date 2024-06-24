@@ -509,7 +509,7 @@ class home:
             try:
                 last_chapter.append(result.find(class_="item-chapter a-h text-nowrap")["href"])
             except:
-                last_chapter.append(f"{result.a["href"]}-0")
+                last_chapter.append(f"{result.a['href']}-0")
                 continue
 
             if len(result.find(class_="item-chapter a-h text-nowrap")["href"].split("-")[-1]) > len_biggest_chapter:
