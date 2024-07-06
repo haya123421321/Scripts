@@ -10,6 +10,7 @@ while read -r line; do
 		git add . > /dev/null 2>&1
 		git commit -m "Commit" > /dev/null 2>&1
 		git push > /dev/null 2>&1
+		echo ✅$line
 	else
 		echo "Directory" $line not found
 	fi
