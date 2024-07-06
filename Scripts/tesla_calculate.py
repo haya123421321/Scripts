@@ -32,7 +32,7 @@ total = 0
 for file in all_pdf_files:
     try:
         text = extract_text(file).split()
-        index = text.index("Subtotal") - 1
+        index = text.index("Kode") - 1
         kroner = text[index]
         total += float(kroner)
         print(round(float(kroner), 2))

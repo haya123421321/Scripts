@@ -21,15 +21,15 @@ func main() {
 	}
 	path,_ := os.Getwd()
 	all_files,_ := os.ReadDir(path)
+
 	var mkv_files []string
 	for _,i := range all_files {
 		file_name := i.Name()
-		if file_name[len(file_name)-len(".mkv"):] == ".mkv" {
+		if file_name[len(file_name)-len(".mkv"):] == ".mkv" && !i.Type().IsDir() {
 			mkv_files = append(mkv_files, file_name)
-			//break
 		}
 	}
-	
+
 	var max_go int
 	if len(mkv_files) > 24 {
 		max_go = 24

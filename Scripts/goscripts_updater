@@ -1,0 +1,15 @@
+#!/usr/bin/bash
+
+pwd=$(pwd)
+cd ~/Scripts/GoScripts/
+for file in *.go;do
+	(
+	base_name="${file%.*}"
+	go build $file
+	mv $base_name ../Scripts
+	) &
+done
+
+wait
+cd $pwd
+echo "Updated!"
