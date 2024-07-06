@@ -2,7 +2,7 @@
 
 SCRIPTPATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 
-file=$SCRIPTPATH"/GitToCommits.txt"
+file=~/Scripts/Git_Updater/GitToCommits.txt
 
 while read -r line; do
 	if [ -d $line ]; then
