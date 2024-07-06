@@ -7,9 +7,9 @@ file=~/Scripts/Git_Updater/GitToCommits.txt
 while read -r line; do
 	if [ -d $line ]; then
 		cd $line
-		git add .
-		git commit -m "Commit"
-		git push
+		git add . > /dev/null 2>&1
+		git commit -m "Commit" > /dev/null 2>&1
+		git push > /dev/null 2>&1
 	else
 		echo "Directory" $line not found
 	fi

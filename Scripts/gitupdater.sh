@@ -1,0 +1,1 @@
+/home/Tepz/Scripts/Git_Updater/gitupdater.sh
