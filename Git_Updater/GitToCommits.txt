@@ -1,1 +1,2 @@
 /home/Tepz/Scripts/
+/home/Tepz/Discord_bot
