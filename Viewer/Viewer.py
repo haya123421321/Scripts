@@ -401,7 +401,7 @@ class home:
         self.scrollbar = tk.Scrollbar(canvas, orient="vertical", command=canvas.yview)
         self.scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
-        self.search_bar = tk.Entry(canvas, width=50, font=("arial", 24))
+        self.search_bar = tk.Entry(canvas, width=50, font=("arial", 26))
         self.search_bar.bind("<KeyRelease>", lambda event: self.search_result())
         self.search_bar.pack(pady=20)
 
@@ -415,6 +415,7 @@ class home:
         
         self.icons = [load_image(os.path.join(path, "mangas", name, "icon.jpg"), icons_height) for name in mangas]
         self.show_mangas(mangas, self.icons)
+        self.removed_manga = []
         
         canvas.update_idletasks()
         
@@ -424,8 +425,8 @@ class home:
         canvas.config(scrollregion=(0, 0, canvas.winfo_reqwidth(), total_height))
         
         canvas.create_window((self.button_frame.winfo_reqwidth() / 5 + self.scrollbar.winfo_reqwidth() * 2, self.search_bar.winfo_reqheight() + 21), window=button_frame, anchor="nw")
-
         # TEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEST
+
         #self.download_menu()
         #canvas.update_idletasks()
         #self.manga_search("solo")
@@ -716,6 +717,12 @@ class home:
 
     def delete(self):
         shutil.rmtree(os.path.join(path, "mangas", self.title))
+        mangas = os.listdir(os.path.join(path, "mangas"))
+        self.icons = [load_image(os.path.join(path, "mangas", name, "icon.jpg"), icons_height) for name in mangas]
+        for i in self.button_frame.grid_slaves():
+            i.destroy()
+            
+        self.show_mangas(mangas, self.icons)
 
     def show_mangas(self, mangas, icons):
         buttons_per_row = 5
@@ -752,37 +759,27 @@ class home:
 
     
     def search_result(self):
-        for widget in self.button_frame.winfo_children():
-            widget.destroy()
+        #for widget in self.button_frame.winfo_children():
+        #    widget.destroy()
 
-        results = [manga for manga in mangas if self.search_bar.get() in manga.lower()]
+        results = [manga for manga in mangas if self.search_bar.get().lower() in manga.lower()]
+        
+        for name in self.button_frame.grid_slaves():
+            if name.pack_slaves()[0].cget("text") not in results:
+                self.removed_manga.append(name)
+                name.grid_remove()
+        
+        for name in self.removed_manga:
+            if name.pack_slaves()[0].cget("text") in results:
+                name.grid()
+                del name
+        
+        for i,name in enumerate(self.button_frame.grid_slaves()):
+            name.grid(row=i // 5, column=i % 5)
 
-        for i, name in enumerate(results):
-            button_container = tk.Frame(self.button_frame, bg="#171717")
-            button_container.grid(row=i // 5, column=i % 5)
-
-            manga_button = tk.Button(button_container, image=self.icons[mangas.index(name)], text=name, borderwidth=0, highlightthickness=0)
-            manga_button.config(command=lambda button=manga_button: load_pressed(button))
-            manga_button.pack(side=tk.TOP, padx=5, pady=20)
-
-            text_label = tk.Label(button_container, text=f"{name}", bg="#171717", fg="#ffffff", font="Helvetica 13 bold")
-            text_label.pack(side=tk.TOP)
-
-            if name in data:
-                last_chapter = os.path.splitext(os.path.basename(data[name]["path"]))[0].split()[-1]
-                text_label2 = tk.Label(button_container, text=f"Last Chapter: {last_chapter}", bg="#171717", fg="#ffffff", font="Helvetica 13 bold")
-                text_label2.pack(side=tk.TOP)
-            else:
-                text_label2 = tk.Label(button_container, text=f"Last Chapter: 0", bg="#171717", fg="#ffffff", font="Helvetica 13 bold")
-                text_label2.pack(side=tk.TOP)
-
-            while text_label.winfo_reqwidth() > manga_button.winfo_reqwidth():
-                name = name[:-1]
-                text_label.config(text=name[:len(name) - 4] + "....")
         canvas.config(scrollregion=self.button_frame.bbox("all"))
         canvas.create_window((self.button_frame.winfo_reqwidth() / 5 + self.scrollbar.winfo_reqwidth() * 2, self.search_bar.winfo_reqheight() + 21), window=self.button_frame, anchor="nw")
 
-        #print(results, end="\r")
 
 
 root = tk.Tk()
