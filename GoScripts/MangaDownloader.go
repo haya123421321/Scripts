@@ -621,20 +621,22 @@ func manganato_download(doc *goquery.Document, chapters1 string, chapters2 strin
 		var second_index int
 		for index,chapter := range temp_chapters {
 			splited_string := strings.Split(chapter, "-")
+			fmt.Print("\033[2J")
+			fmt.Print("\033[1;1H")
+
 			if splited_string[len(splited_string) - 1] == chapters1 {
 				first_index = index	
 			} else if splited_string[len(splited_string) - 1] == chapters2 {
 				second_index = index + 1
 			}
-			if first_index != 0 && second_index != 0 {
+			if first_index != second_index {
 				break
 			}
 		}
-		if first_index != 0 && second_index != 0 {
+		if first_index != second_index {
 			chapters = temp_chapters[first_index:second_index]
 		}
 	}
-	
 	if len(chapters) < 1 {
 		return errors.New("No chapters to download!!")
 	}
@@ -666,5 +668,6 @@ func manganato_download(doc *goquery.Document, chapters1 string, chapters2 strin
 
 	close(chapterURLs)
 	wg.Wait()
+	os.Exit(0)
 	return nil
 }
