@@ -759,9 +759,6 @@ class home:
 
     
     def search_result(self):
-        #for widget in self.button_frame.winfo_children():
-        #    widget.destroy()
-
         results = [manga for manga in mangas if self.search_bar.get().lower() in manga.lower()]
         
         for name in self.button_frame.grid_slaves():
@@ -776,10 +773,6 @@ class home:
         
         for i,name in enumerate(self.button_frame.grid_slaves()):
             name.grid(row=i // 5, column=i % 5)
-
-        canvas.config(scrollregion=self.button_frame.bbox("all"))
-        canvas.create_window((self.button_frame.winfo_reqwidth() / 5 + self.scrollbar.winfo_reqwidth() * 2, self.search_bar.winfo_reqheight() + 21), window=self.button_frame, anchor="nw")
-
 
 
 root = tk.Tk()
