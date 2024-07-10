@@ -619,17 +619,20 @@ func manganato_download(doc *goquery.Document, chapters1 string, chapters2 strin
 	} else if chapters1 != chapters2 {
 		var first_index int
 		var second_index int
+		var found1 bool
+		var found2 bool
 		for index,chapter := range temp_chapters {
 			splited_string := strings.Split(chapter, "-")
 			fmt.Print("\033[2J")
 			fmt.Print("\033[1;1H")
-
-			if splited_string[len(splited_string) - 1] == chapters1 {
+			if splited_string[len(splited_string) - 1] == chapters1 && found1 == false {
 				first_index = index	
-			} else if splited_string[len(splited_string) - 1] == chapters2 {
+				found1 = true
+			} else if splited_string[len(splited_string) - 1] == chapters2 && found2 == false {
 				second_index = index + 1
+				found2 = true
 			}
-			if first_index != second_index {
+			if found1 && found2 {
 				break
 			}
 		}
