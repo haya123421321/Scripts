@@ -165,7 +165,7 @@ func main() {
 		for index, title := range mangas_found {
 			fmt.Print("\033[" + strconv.Itoa(start_line + index) + ";3H")
 
-			if len(title) >= width/2 - len(strconv.Itoa(index) + "  ") {
+			if len(title) >= width/2 - len(mangas_found) - 2 {
 				for len(title) >= width/2 - len(strconv.Itoa(index) + "  ") {
 					title = title[:len(title) - 1]
 				}
