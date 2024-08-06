@@ -324,8 +324,12 @@ func main() {
 							split_string := strings.Split(Chapters, "-")
 							string1 := split_string[0]
 							string2 := split_string[1]
+							if string2 == "" {
+								err = manganato_download(current_manga_doc, string1, "Rest")
+							} else if string1 == "" {
+								err = manganato_download(current_manga_doc, "Rest", string2)
+							}
 
-							err = manganato_download(current_manga_doc, string1, string2)
 						} else {
 							err = manganato_download(current_manga_doc, Chapters, Chapters)
 						}
@@ -625,15 +629,33 @@ func manganato_download(doc *goquery.Document, chapters1 string, chapters2 strin
 			splited_string := strings.Split(chapter, "-")
 			fmt.Print("\033[2J")
 			fmt.Print("\033[1;1H")
-			if splited_string[len(splited_string) - 1] == chapters1 && found1 == false {
-				first_index = index	
-				found1 = true
-			} else if splited_string[len(splited_string) - 1] == chapters2 && found2 == false {
-				second_index = index + 1
-				found2 = true
-			}
-			if found1 && found2 {
-				break
+			if chapters2 == "Rest" {
+				if splited_string[len(splited_string) - 1] == chapters1 && found1 == false {
+					first_index = index	
+					found1 = true
+					second_index = len(temp_chapters)
+					break
+				}
+
+			} else if chapters1 == "Rest" {
+				if splited_string[len(splited_string) - 1] == chapters2 && found2 == false {
+					second_index = index	
+					found2 = true
+					first_index = 0
+					break
+				}
+
+			} else {
+				if splited_string[len(splited_string) - 1] == chapters1 && found1 == false {
+					first_index = index	
+					found1 = true
+				} else if splited_string[len(splited_string) - 1] == chapters2 && found2 == false {
+					second_index = index + 1
+					found2 = true
+				}
+				if found1 && found2 {
+					break
+				}
 			}
 		}
 		if first_index != second_index {
