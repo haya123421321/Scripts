@@ -1,7 +1,7 @@
 #!/usr/bin/bash
 
 pwd=$(pwd)
-cd ~/Scripts/GoScripts/
+cd "$(dirname $0)/../GoScripts"
 for file in *.go;do
 	(
 	base_name="${file%.*}"
