@@ -115,6 +115,8 @@ func main() {
 					Cursor_pos += 1
 				}
 			}	
+		} else if char == 00 {
+				
 		} else {
 			Search = Search[:Cursor_pos] + string(char) + Search[Cursor_pos:]
 			Cursor_pos += 1
