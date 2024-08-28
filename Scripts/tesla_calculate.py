@@ -32,10 +32,12 @@ total = 0
 for file in all_pdf_files:
     try:
         text = extract_text(file).split()
+
         index = text.index("Kode") - 1
+        dato_index = text.index("Fakturadato") + 2
         kroner = text[index]
         total += float(kroner)
-        print(round(float(kroner), 2))
+        print(round(float(kroner), 2), " ", text[dato_index])
     except:
         continue
 
