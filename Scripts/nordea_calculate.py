@@ -1,4 +1,4 @@
- #!/usr/bin/python
+#!/usr/bin/python
 
 from pdfminer.high_level import extract_text
 import os
