@@ -1,1 +1,1 @@
-/home/Tepz/Scripts/Viewer/Viewer.py
+/home/tepz/Scripts/Viewer/Viewer.py
