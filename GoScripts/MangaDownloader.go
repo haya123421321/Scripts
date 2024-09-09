@@ -384,9 +384,10 @@ func main() {
 
 }
 
-func downloadChapter(chapterURL, name, mangaPath string) {
+func downloadChapter(chapterURL, name, mangaPath string, total_digits_in_name int) {
 	chapterSplit := strings.Split(chapterURL, "-")
 	chapter := chapterSplit[len(chapterSplit)-1]
+	print(total_digits_in_name)
 	chapterDir := path.Join(mangaPath, name+" "+chapter)
 	
 	if _, err := os.Stat(chapterDir + ".zip"); errors.Is(err, os.ErrNotExist) {
@@ -606,16 +607,16 @@ func manganato_download(doc *goquery.Document, chapters1 string, chapters2 strin
 		reversed_chapters = append(reversed_chapters, chapter)
 	})
 
-	var temp_chapters []string
+	var All_chapters []string
 	for _, n := range reversed_chapters {
-		temp_chapters = append([]string{n}, temp_chapters...)
+		All_chapters = append([]string{n}, All_chapters...)
 	}
 	
 	var chapters []string
 	if chapters1 == "all" && chapters2 == "all" {
-			chapters = temp_chapters
+			chapters = All_chapters
 	} else if chapters1 == chapters2 {
-		for _,chapter := range temp_chapters {
+		for _,chapter := range All_chapters {
 			splited_string := strings.Split(chapter, "-")
 			if splited_string[len(splited_string) - 1] == chapters1 {
 				chapters = append(chapters, chapter)
@@ -627,7 +628,7 @@ func manganato_download(doc *goquery.Document, chapters1 string, chapters2 strin
 		var second_index int
 		var found1 bool
 		var found2 bool
-		for index,chapter := range temp_chapters {
+		for index,chapter := range All_chapters {
 			splited_string := strings.Split(chapter, "-")
 			fmt.Print("\033[2J")
 			fmt.Print("\033[1;1H")
@@ -635,7 +636,7 @@ func manganato_download(doc *goquery.Document, chapters1 string, chapters2 strin
 				if splited_string[len(splited_string) - 1] == chapters1 && found1 == false {
 					first_index = index	
 					found1 = true
-					second_index = len(temp_chapters)
+					second_index = len(All_chapters)
 					break
 				}
 
@@ -661,7 +662,7 @@ func manganato_download(doc *goquery.Document, chapters1 string, chapters2 strin
 			}
 		}
 		if first_index != second_index {
-			chapters = temp_chapters[first_index:second_index]
+			chapters = All_chapters[first_index:second_index]
 		}
 	}
 	if len(chapters) < 1 {
@@ -671,6 +672,7 @@ func manganato_download(doc *goquery.Document, chapters1 string, chapters2 strin
 	manga_path := path.Join(cwd, name)
 	os.Mkdir(manga_path, 0755)
 
+	total_digits_in_name := len(strconv.Itoa(len(All_chapters)))
 	chapterURLs := make(chan string)
 	max := make(chan struct{}, 3)
 	var wg sync.WaitGroup
@@ -684,7 +686,64 @@ func manganato_download(doc *goquery.Document, chapters1 string, chapters2 strin
 					<-max
 					wg.Done()
 				}()
-				downloadChapter(url, name, manga_path)
+				chapterSplit := strings.Split(chapterURL, "-")
+				chapter_without_zeroes := chapterSplit[len(chapterSplit)-1]
+				var zeroes_to_fill int
+				if strings.Contains(chapter_without_zeroes, ".") {
+					s := strings.Split(chapter_without_zeroes, ".")[0]
+					zeroes_to_fill = total_digits_in_name - len(s)
+				} else {
+					zeroes_to_fill = total_digits_in_name - len(chapter_without_zeroes)
+				}
+				chapter := strings.Repeat("0", zeroes_to_fill) + chapter_without_zeroes
+				chapterDir := path.Join(manga_path, name+" "+chapter)
+				
+				if _, err := os.Stat(chapterDir + ".zip"); errors.Is(err, os.ErrNotExist) {
+					os.Mkdir(chapterDir, 0755)
+
+					resp, err := http.Get(chapterURL)
+					if err != nil {
+						fmt.Println(err)
+						return
+					}
+					defer resp.Body.Close()
+
+					doc, err := goquery.NewDocumentFromReader(resp.Body)
+					if err != nil {
+						fmt.Println(err)
+						return
+					}
+
+					var urls []string
+					doc.Find("div.container-chapter-reader").Find("img").Each(func(i int, s *goquery.Selection) {
+						src, _ := s.Attr("src")
+						urls = append(urls, src)
+					})
+
+					imageSemaphore := make(chan struct{}, 5)
+
+					var wg sync.WaitGroup
+
+					for index, chapterURL := range urls {
+						imageSemaphore <- struct{}{}
+
+						wg.Add(1)
+						go func(index int, url, chapterDir string) {
+							defer func() {
+								<-imageSemaphore
+								wg.Done()
+							}()
+							downloadImage(index, url, chapterDir)
+						}(index, chapterURL, chapterDir)
+					}
+
+					wg.Wait()
+					ZipDir(chapterDir, chapterDir + ".zip")
+					os.RemoveAll(chapterDir)
+					fmt.Println("✅ " + name + " " + chapter)
+				} else {
+					return
+				}
 			}(chapterURL)
 		}
 	}()
