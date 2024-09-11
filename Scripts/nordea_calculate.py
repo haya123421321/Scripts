@@ -20,38 +20,34 @@ def find_Nordea_files(directory):
 nordea_files = find_Nordea_files(sys.argv[1])
 total = 0
 
-i = 0
 index = 3
-while True:
-    if i == len(nordea_files):
-        break
-    file = nordea_files[i]
+for file in nordea_files:
     text = extract_text(file).split("\n")
 
-    try:
-        kroner_index = text.index("Rentedato") + index
-    except ValueError:
-        print("Something wrong with " + file)
-        i += 1
+    while True:
+        try:
+            kroner_index = text.index("Rentedato") + index
+        except ValueError:
+            print("Something wrong with " + file)
         
-    try:
-        kroner_no_strip = text[kroner_index].strip()
-        if "DKK" not in kroner_no_strip:
+        try:
+            kroner_no_strip = text[kroner_index].strip()
+            if "DKK" not in kroner_no_strip:
+                index += 1
+                continue
+
+            kroner = text[kroner_index].strip("-DKK").strip().replace(",", ".")
+            kroner_split = kroner.split(".")
+
+            if len(kroner_split) > 1:
+                kroner = "".join(kroner_split[:-1]) + "." + kroner_split[-1]
+
+            total += float(kroner)
+            print(file + ":", str(round(float(kroner), 2)) + "kr")
+            index = 3
+            break
+        except:
             index += 1
-            continue
-
-        kroner = text[kroner_index].strip("-DKK").strip().replace(",", ".")
-        kroner_split = kroner.split(".")
-
-        if len(kroner_split) > 1:
-            kroner = "".join(kroner_split[:-1]) + "." + kroner_split[-1]
-
-        total += float(kroner)
-        print(file + ":", str(round(float(kroner), 2)) + "kr")
-        i += 1
-        index = 3
-    except:
-        index += 1
 
 
 print(f"Total: {round(total, 2)} kr")                                                 
