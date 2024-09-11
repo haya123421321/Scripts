@@ -27,6 +27,7 @@ while True:
         break
     file = nordea_files[i]
     text = extract_text(file).split("\n")
+
     try:
         kroner_index = text.index("Rentedato") + index
     except ValueError:
@@ -34,7 +35,17 @@ while True:
         i += 1
         
     try:
+        kroner_no_strip = text[kroner_index].strip()
+        if "DKK" not in kroner_no_strip:
+            index += 1
+            continue
+
         kroner = text[kroner_index].strip("-DKK").strip().replace(",", ".")
+        kroner_split = kroner.split(".")
+
+        if len(kroner_split) > 1:
+            kroner = "".join(kroner_split[:-1]) + "." + kroner_split[-1]
+
         total += float(kroner)
         print(file + ":", str(round(float(kroner), 2)) + "kr")
         i += 1
