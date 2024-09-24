@@ -404,9 +404,16 @@ class home:
         self.search_bar = tk.Entry(canvas, width=50, font=("arial", 26))
         self.search_bar.bind("<KeyRelease>", lambda event: self.search_result())
         self.search_bar.pack(pady=20)
+        root.update()
+        print(self.search_bar.winfo_x())
 
-        self.download_button = tk.Button(canvas, text="+", font=("arial", 18))
-        self.download_button.place(x=self.search_bar.winfo_reqwidth()*1.5 + 70, y=20)
+        self.Plus_image = Image.open("Test.png")
+        self.Plus_image = self.Plus_image.resize((50,50))
+        self.photoImg = ImageTk.PhotoImage(self.Plus_image)
+
+        self.download_button = tk.Button(canvas, text="+", font=("arial", 18), image=self.photoImg, bg="#171717", borderwidth=0)
+        #self.download_button.place(x=self.search_bar.winfo_reqwidth()*1.5 + 70, y=20)
+        self.download_button.place(x=self.search_bar.winfo_x() + self.search_bar.winfo_width() + 20, y=20)
         self.download_button.config(command=self.download_menu)
 
         button_frame = tk.Frame(canvas, bg="#171717")
