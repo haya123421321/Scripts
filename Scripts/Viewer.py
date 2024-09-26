@@ -1,1 +1,0 @@
-/home/tepz/Scripts/Viewer/Viewer.py

@@ -407,20 +407,32 @@ class home:
         root.update()
         print(self.search_bar.winfo_x())
 
-        self.Plus_image = Image.open("Test.png")
+        self.Plus_image = Image.open("assets/add_button.png")
         self.Plus_image = self.Plus_image.resize((50,50))
         self.photoImg = ImageTk.PhotoImage(self.Plus_image)
 
-        self.download_button = tk.Button(canvas, text="+", font=("arial", 18), image=self.photoImg, bg="#171717", borderwidth=0)
-        #self.download_button.place(x=self.search_bar.winfo_reqwidth()*1.5 + 70, y=20)
-        self.download_button.place(x=self.search_bar.winfo_x() + self.search_bar.winfo_width() + 20, y=20)
+        self.download_button = tk.Button(canvas, text="+", font=("arial", 18), image=self.photoImg, bg="#171717", borderwidth=0, highlightthickness=0)
+        self.download_button.place(x=self.search_bar.winfo_x() + self.search_bar.winfo_width() + 20, y=15)
         self.download_button.config(command=self.download_menu)
 
         button_frame = tk.Frame(canvas, bg="#171717")
         button_frame.pack(side=tk.TOP)
         self.button_frame = button_frame
-        
-        self.icons = [load_image(os.path.join(path, "mangas", name, "icon.jpg"), icons_height) for name in mangas]
+
+        self.icon_photo_img = ""
+        self.icons = []
+        for name in mangas:
+            icon = os.path.join(path, "mangas", name, "icon.jpg")
+            if os.path.exists(icon):
+                self.icons.append(load_image(icon, icons_height))
+            else:
+                if isinstance(self.icon_photo_img, ImageTk.PhotoImage):
+                    self.icons.append(self.icon_photo_img)
+                else:
+                    self.No_icon_icon = Image.open("assets/No_icon.jpg")
+                    self.icon_photo_img = ImageTk.PhotoImage(self.No_icon_icon)
+                    self.icons.append(self.icon_photo_img)
+
         self.show_mangas(mangas, self.icons)
         self.removed_manga = []
         
@@ -740,7 +752,7 @@ class home:
             button_container = tk.Frame(self.button_frame, bg="#171717")
             button_container.grid(row=i // buttons_per_row, column=i % buttons_per_row)
 
-            manga_button = tk.Button(button_container, image=icon, text=name, borderwidth=0, highlightthickness=0)
+            manga_button = tk.Button(button_container, image=icon, text=name, borderwidth=0, highlightthickness=0, bg="#141414")
             manga_button.config(command=lambda button=manga_button: load_pressed(button))
             manga_button.pack(side=tk.TOP, padx=5, pady=20)
             manga_button.bind("<Button-3>", lambda event, button = manga_button.cget("text"): self.right_click_menu(event,button))
