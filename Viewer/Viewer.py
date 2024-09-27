@@ -406,7 +406,7 @@ class home:
         self.search_bar.pack(pady=20)
         root.update()
 
-        self.Plus_image = Image.open("assets/add_button.png")
+        self.Plus_image = Image.open(os.path.join(path, "assets", "add_button.png"))
         self.Plus_image = self.Plus_image.resize((50,50))
         self.photoImg = ImageTk.PhotoImage(self.Plus_image)
 
@@ -428,7 +428,7 @@ class home:
                 if isinstance(self.icon_photo_img, ImageTk.PhotoImage):
                     self.icons.append(self.icon_photo_img)
                 else:
-                    self.No_icon_icon = Image.open("assets/No_icon.jpg")
+                    self.No_icon_icon = Image.open(os.path.join(path, "assets", "No_icon.jpg"))
                     self.icon_photo_img = ImageTk.PhotoImage(self.No_icon_icon)
                     self.icons.append(self.icon_photo_img)
 
