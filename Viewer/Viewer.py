@@ -405,9 +405,8 @@ class home:
         self.search_bar.bind("<KeyRelease>", lambda event: self.search_result())
         self.search_bar.pack(pady=20)
         root.update()
-        print(self.search_bar.winfo_x())
 
-        self.Plus_image = Image.open(os.path.join(path,"assets", "add_button.png"))
+        self.Plus_image = Image.open("assets/add_button.png")
         self.Plus_image = self.Plus_image.resize((50,50))
         self.photoImg = ImageTk.PhotoImage(self.Plus_image)
 
@@ -429,7 +428,7 @@ class home:
                 if isinstance(self.icon_photo_img, ImageTk.PhotoImage):
                     self.icons.append(self.icon_photo_img)
                 else:
-                    self.No_icon_icon = Image.open(os.path.join(path, "assets", "No_icon.jpg"))
+                    self.No_icon_icon = Image.open("assets/No_icon.jpg")
                     self.icon_photo_img = ImageTk.PhotoImage(self.No_icon_icon)
                     self.icons.append(self.icon_photo_img)
 
@@ -624,7 +623,7 @@ class home:
 
                 uploaded_button = tk.Label(chapters_frame, text=chapter.find(class_="chapter-time text-nowrap").text, padx=10, pady=5, font=("Helvetica bold", 17), bg="#2E2E2E", fg="white", anchor="w", highlightthickness=0, borderwidth=0)
                 uploaded_button.grid(row=i + 1, column=2, sticky="e")
-
+    
         scrollbar = tk.Scrollbar(self.info_canvas, orient="vertical", command=self.info_canvas.yview)
         scrollbar.place(relx=1, rely=0, relheight=1, anchor=tk.NE)
 
@@ -632,6 +631,11 @@ class home:
 
         info_frame.update_idletasks()
         self.info_canvas.config(scrollregion=self.info_canvas.bbox("all"))
+        
+        canvas.update_idletasks()
+        
+        if chapters_frame.winfo_width() > self.info_canvas.winfo_width():
+            self.info_canvas.configure(width=chapters_frame.winfo_width() + scrollbar.winfo_width())
 
     def download_single(self, urls):
         num_digits = len(str(len(self.chapterss)))
