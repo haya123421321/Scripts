@@ -53,7 +53,7 @@ def space_scroll(canvas, event, stop):
     for _ in range(8):
         canvas.yview_scroll(1, "units")
         canvas.update()
-        root.after(10)
+        root.after(20)
 
     images.show_next_image()
 
@@ -61,7 +61,7 @@ def shift_space_scroll(canvas, event):
     for _ in range(8):
         canvas.yview_scroll(-1, "units")
         canvas.update()
-        root.after(10)
+        root.after(20)
 
     images.show_next_image()
 
