@@ -1,1 +1,3 @@
-mangas
+.gitignore
+Viewer/mangas
+Viewer/data.json
