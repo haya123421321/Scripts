@@ -799,6 +799,7 @@ class home:
 
 
 root = tk.Tk()
+#root.iconphoto(False, os.path.join(path, "viewer.ico"))
 root.protocol("WM_DELETE_WINDOW", save_y_axis_position)
 if os.name == "nt":
     root.state('zoomed')

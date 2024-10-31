@@ -7,4 +7,4 @@ fi
 
 base_name="${1%.*}"
 
-7z x "$1" -o"$base_name"
+7z x -o"$base_name" "$1" ${@:2}
