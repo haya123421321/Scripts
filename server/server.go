@@ -15,6 +15,8 @@ func main() {
 	if err != nil{
 		panic(err)
 	}
+	
+	fmt.Println("Started service on port 8080")
 
 	for {
 		conn,err := listener.Accept()
@@ -23,7 +25,7 @@ func main() {
 		}
 		connections[strings.Split(conn.RemoteAddr().String(), ":")[0]] = conn
 		fmt.Printf("%s Joined\n", conn.RemoteAddr())
-		conn.Write([]byte("[Username]: "))
+		conn.Write([]byte("[USERNAME]: "))
 
 		go handle(conn)
 	}
@@ -40,15 +42,13 @@ func handle(conn net.Conn) {
 			break
 		}
 		
-		conn.Write([]byte("[Username]: "))
-
+		conn.Write([]byte("[USERNAME]: "))
 		for ip,connection := range connections {
 			if ip == strings.Split(conn.RemoteAddr().String(), ":")[0]{
 				continue
 			}
 			go func(ip string) {
-				connection.Write([]byte("\033[1F\033[0K" + conn.RemoteAddr().String() + ": " + string(buf) + "\n"))
-				connection.Write([]byte("[Username]: "))
+				connection.Write([]byte("\033[0G\033[2K" + conn.RemoteAddr().String() + ": " + string(buf) + "\033[1E[USERNAME]: "))
 			}(ip)
 		}
 	}
