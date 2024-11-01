@@ -25,7 +25,7 @@ func main() {
 		panic(err)
 	}
 
-	data_file_path = filepath.Join(user, "Server", "data.json")
+	data_file_path = filepath.Join(user, ".Server", "data.json")
 	
 	if _, err := os.Stat(data_file_path); err != nil {
 		os.MkdirAll(filepath.Dir(data_file_path), 0755)
