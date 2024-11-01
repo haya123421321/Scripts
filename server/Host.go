@@ -71,7 +71,7 @@ func handle(conn net.Conn, ip string) {
 		}
 		message := strings.TrimSpace(string(buf)[:n])
 
-		if message[0] == ':' {
+		if len(message) > 0 && message[0] == ':' {
 			if message == ":Help" {
 				conn.Write([]byte(":Default - Make this connection the default\n"))
 				conn.Write([]byte(":Username <new-name> - Change your username\n"))
@@ -85,10 +85,10 @@ func handle(conn net.Conn, ip string) {
 			if ip == strings.Split(conn.RemoteAddr().String(), ":")[0]{
 				continue
 			}
+			fmt.Println(ip)
 
 			go func(ip string) {
-				//connection.Write([]byte("\033[0G\033[2K" + conn.RemoteAddr().String() + ": " + message + "\n[USERNAME]: "))
-				connection.Connection.Write([]byte("\033[0G\033[2K" + connection.Name + ": " + message + "\n" + user + ": "))
+				connection.Connection.Write([]byte("\033[0G\033[2K" + user + ": " + message + "\n" + connection.Name + ": "))
 			}(ip)
 		}
 	}
