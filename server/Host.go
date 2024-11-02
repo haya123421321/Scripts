@@ -62,12 +62,13 @@ func main() {
 		ip := strings.Split(conn.RemoteAddr().String(), ":")[0]
 
 		buf := make([]byte, 1024)
-		conn.Read(buf)
-		
+		n,_ := conn.Read(buf)
+
 		var username string
-		user_name_split := strings.Split(string(buf), ":")
+
+		user_name_split := strings.Split(decrypt(string(buf[:n])), ":")
 		if user_name_split[0] == "--USER" {
-			if len(user_name_split) > 2 {
+			if len(user_name_split) > 1 {
 				username = strings.Join(user_name_split[1:], ":")
 			} else {
 				username = ip
@@ -81,6 +82,7 @@ func main() {
 			Name: username,
 			Connection: conn,
 		}
+
 		fmt.Printf("%s Joined\n", conn.RemoteAddr())
 
 		conn.Write([]byte("WELCOME!\nUse :Help to see available commands\n\n"))
@@ -122,7 +124,6 @@ func handle(conn net.Conn, ip string) {
 			conn.Write([]byte(user_green + ": "))
 			continue
 		}
-		fmt.Println(message)
 
 		conn.Write([]byte(user_green + ": "))
 		for c_ip,connection := range Connections {
@@ -151,10 +152,16 @@ func encrypt(plaintext string) string {
 		}
 	} else {
 		dst = make([]byte, len(plaintext))
-		dst = append(dst, []byte(plaintext)...)
+		for i:=0;i<len(plaintext);i++ {
+			dst[i] = byte(plaintext[i])
+		} 
 	}
 
-	Cipher_block.Encrypt(dst, dst)
+	
+	blocksize := Cipher_block.BlockSize()
+	for i:=0;i<len(dst);i+=blocksize {
+		Cipher_block.Encrypt(dst[i:i+blocksize], dst[i:i+blocksize])
+	}
 
 	return base64.StdEncoding.EncodeToString(dst)
 }
@@ -194,7 +201,7 @@ func decrypt(plaintext string) string {
 	if is_padded {
 		dst_string = dst_string[:len(dst_string) - int(padded)]
 	}
-	fmt.Println(str)
+
 	return dst_string
 }
 

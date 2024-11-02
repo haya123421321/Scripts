@@ -83,9 +83,9 @@ func main() {
 	}
 
 	if data.Username != "" {
-		conn.Write([]byte("--USER:"+data.Username))
+		conn.Write([]byte(encrypt("--USER:"+data.Username)))
 	} else {
-		conn.Write([]byte("--USER:"))
+		conn.Write([]byte(encrypt("--USER:")))
 	}
 	
 	go reader(conn)
@@ -164,23 +164,41 @@ func encrypt(plaintext string) string {
 
 
 func decrypt(plaintext string) string {
-	var dst []byte
-	
-	if len(plaintext)%Cipher_block.BlockSize() != 0 {
-		padded_amount := (Cipher_block.BlockSize()*(1+(len(plaintext) / Cipher_block.BlockSize()))) - len(plaintext)
-		dst = make([]byte, len(plaintext) + padded_amount)
-		for i:=0;i<len(plaintext);i++ {
-			dst[i] = byte(plaintext[i])
-		}
-		for i:=0;i<padded_amount;i++ {
-			dst[i+len(plaintext)] = byte(padded_amount)
-		}
-	} else {
-		dst = make([]byte, len(plaintext))
-		dst = append(dst, []byte(plaintext)...)
+	str,err := base64.StdEncoding.DecodeString(plaintext)
+	if err != nil {
+		return ""
 	}
 
-	Cipher_block.Decrypt(dst, dst)
+	dst := make([]byte, len(str))
+	blocksize := Cipher_block.BlockSize()
 
-	return base64.StdEncoding.EncodeToString(dst)
+	for i:=0;i<len(dst);i+=blocksize {
+		Cipher_block.Decrypt(dst[i:i+blocksize], str[i:i+blocksize])
+	}
+	
+	is_padded := true
+	dst_length := len(dst)
+	padded := dst[dst_length-1]
+
+	if int(padded) > dst_length {
+		is_padded = false
+	} else if int(padded) < dst_length {
+		for i:=dst_length-int(padded);i<dst_length;i++ {
+			if dst[i] != padded {
+				is_padded = false
+				break
+			}
+		}
+	} else {
+		is_padded = false
+	}
+
+	dst_string := string(dst)
+
+	if is_padded {
+		dst_string = dst_string[:len(dst_string) - int(padded)]
+	}
+
+	return dst_string
 }
+
