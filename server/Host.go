@@ -1,14 +1,18 @@
 package main
 
 import (
+	"crypto/aes"
+	"crypto/cipher"
+	"encoding/base64"
 	"fmt"
 	"net"
+	"os"
+	"path/filepath"
 	"strings"
 )
 
-//var (
-//	connections = make(map[string]net.Conn)
-//)
+
+var Cipher_block cipher.Block
 
 type connection_data struct {
 	Name string
@@ -25,6 +29,29 @@ func main() {
 		panic(err)
 	}
 	
+	user,err := os.UserHomeDir()
+	if err != nil {
+		panic(err)
+	}
+
+	key_file_path := filepath.Join(user, ".Server", "Key.key")
+
+	if _, err := os.Stat(key_file_path); err != nil {
+		os.MkdirAll(filepath.Dir(key_file_path), 0755)
+		fmt.Println("Missing a key with 32 characters in destination: " + key_file_path)
+	}
+
+	key_file,err := os.ReadFile(key_file_path)
+	if err != nil {
+		panic(err)
+	}
+
+	Cipher_block,err = aes.NewCipher([]byte(strings.TrimSpace(string(key_file))))
+	if err != nil {
+		fmt.Println("Couldnt make a cipher out of key file")
+		panic(err)
+	}
+
 	fmt.Println("Started service on port 8080")
 
 	for {
@@ -77,7 +104,8 @@ func handle(conn net.Conn, ip string) {
 			delete(Connections, ip)
 			break
 		}
-		message := strings.TrimSpace(string(buf)[:n])
+		//message :=  strings.TrimSpace(string(buf)[:n])
+		message :=  decrypt(string(buf[:n]))
 
 		if len(message) > 0 && message[0] == ':' {
 			if message == ":Help" {
@@ -94,6 +122,7 @@ func handle(conn net.Conn, ip string) {
 			conn.Write([]byte(user_green + ": "))
 			continue
 		}
+		fmt.Println(message)
 
 		conn.Write([]byte(user_green + ": "))
 		for c_ip,connection := range Connections {
@@ -107,3 +136,65 @@ func handle(conn net.Conn, ip string) {
 		}
 	}
 }
+
+func encrypt(plaintext string) string {
+	var dst []byte
+	
+	if len(plaintext)%Cipher_block.BlockSize() != 0 {
+		padded_amount := (Cipher_block.BlockSize()*(1+(len(plaintext) / Cipher_block.BlockSize()))) - len(plaintext)
+		dst = make([]byte, len(plaintext) + padded_amount)
+		for i:=0;i<len(plaintext);i++ {
+			dst[i] = byte(plaintext[i])
+		}
+		for i:=0;i<padded_amount;i++ {
+			dst[i+len(plaintext)] = byte(padded_amount)
+		}
+	} else {
+		dst = make([]byte, len(plaintext))
+		dst = append(dst, []byte(plaintext)...)
+	}
+
+	Cipher_block.Encrypt(dst, dst)
+
+	return base64.StdEncoding.EncodeToString(dst)
+}
+
+func decrypt(plaintext string) string {
+	str,err := base64.StdEncoding.DecodeString(plaintext)
+	if err != nil {
+		return ""
+	}
+
+	dst := make([]byte, len(str))
+	blocksize := Cipher_block.BlockSize()
+
+	for i:=0;i<len(dst);i+=blocksize {
+		Cipher_block.Decrypt(dst[i:i+blocksize], str[i:i+blocksize])
+	}
+	
+	is_padded := true
+	dst_length := len(dst)
+	padded := dst[dst_length-1]
+
+	if int(padded) > dst_length {
+		is_padded = false
+	} else if int(padded) < dst_length {
+		for i:=dst_length-int(padded);i<dst_length;i++ {
+			if dst[i] != padded {
+				is_padded = false
+				break
+			}
+		}
+	} else {
+		is_padded = false
+	}
+
+	dst_string := string(dst)
+
+	if is_padded {
+		dst_string = dst_string[:len(dst_string) - int(padded)]
+	}
+	fmt.Println(str)
+	return dst_string
+}
+
