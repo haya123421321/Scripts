@@ -32,6 +32,7 @@ func main() {
 		if err != nil {
 			return
 		}
+		ip := strings.Split(conn.RemoteAddr().String(), ":")[0]
 
 		buf := make([]byte, 1024)
 		conn.Read(buf)
@@ -39,12 +40,15 @@ func main() {
 		var username string
 		user_name_split := strings.Split(string(buf), ":")
 		if user_name_split[0] == "--USER" {
-			username = strings.Join(user_name_split[1:], ":")
+			if len(user_name_split) > 2 {
+				username = strings.Join(user_name_split[1:], ":")
+			} else {
+				username = ip
+			}
 		} else {
-			username = ""
+			username = ip
 		}
 
-		ip := strings.Split(conn.RemoteAddr().String(), ":")[0]
 
 		Connections[ip] = connection_data{
 			Name: username,
@@ -52,13 +56,17 @@ func main() {
 		}
 		fmt.Printf("%s Joined\n", conn.RemoteAddr())
 
+		conn.Write([]byte("WELCOME!\nUse :Help to see available commands\n\n"))
+
 		go handle(conn, ip)
 	}
 }
 
 func handle(conn net.Conn, ip string) {
-	user := Connections[ip].Name
-	conn.Write([]byte(user + ": "))
+	user_green := "\033[0;32m" + Connections[ip].Name + "\033[0m"
+	user_red := "\033[0;31m" + Connections[ip].Name + "\033[0m"
+
+	conn.Write([]byte(user_green + ": "))
 	defer conn.Close()
 	for {
 		buf := make([]byte, 1024)
@@ -66,7 +74,7 @@ func handle(conn net.Conn, ip string) {
 
 		if err != nil {
 			fmt.Printf("%s closed connection\n", conn.RemoteAddr())
-			delete(Connections, strings.Split(conn.RemoteAddr().String(), ":")[0])
+			delete(Connections, ip)
 			break
 		}
 		message := strings.TrimSpace(string(buf)[:n])
@@ -75,20 +83,26 @@ func handle(conn net.Conn, ip string) {
 			if message == ":Help" {
 				conn.Write([]byte(":Default - Make this connection the default\n"))
 				conn.Write([]byte(":Username <new-name> - Change your username\n"))
-			}	
-			conn.Write([]byte(user + ": "))
+				conn.Write([]byte(":List - List all connected users\n"))
+				conn.Write([]byte(":Exit - Exit the program\n"))
+			} else if message == ":List" {
+				for _,connection := range Connections {
+					conn.Write([]byte(fmt.Sprintf("%s\n", connection.Name)))
+				}
+			}
+
+			conn.Write([]byte(user_green + ": "))
 			continue
 		}
 
-		conn.Write([]byte(user + ": "))
-		for ip,connection := range Connections {
-			if ip == strings.Split(conn.RemoteAddr().String(), ":")[0]{
+		conn.Write([]byte(user_green + ": "))
+		for c_ip,connection := range Connections {
+			if c_ip == ip {
 				continue
 			}
-			fmt.Println(ip)
 
 			go func(ip string) {
-				connection.Connection.Write([]byte("\033[0G\033[2K" + user + ": " + message + "\n" + connection.Name + ": "))
+				connection.Connection.Write([]byte("\033[0G\033[2K" + user_red + ": " + message + "\n\033[0;32m" + connection.Name + "\033[0m: "))
 			}(ip)
 		}
 	}

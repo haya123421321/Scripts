@@ -63,6 +63,8 @@ func main() {
 
 	if data.Username != "" {
 		conn.Write([]byte("--USER:"+data.Username))
+	} else {
+		conn.Write([]byte("--USER:"))
 	}
 	
 	go reader(conn)
@@ -104,6 +106,8 @@ func writer(conn net.Conn) {
 			} else {
 				fmt.Print("Usage: :Username <new-name>\n")
 			}
+		} else if Message == ":Exit" {
+			os.Exit(0)
 		}
 
 		conn.Write([]byte(Message))
