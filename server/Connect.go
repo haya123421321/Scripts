@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 type json_info struct {
@@ -29,7 +30,6 @@ func main() {
 	}
 
 	data_file_path = filepath.Join(user, ".Server", "data.json")
-	key_file_path := filepath.Join(user, ".Server", "Key.key")
 	
 	if _, err := os.Stat(data_file_path); err != nil {
 		os.MkdirAll(filepath.Dir(data_file_path), 0755)
@@ -43,21 +43,17 @@ func main() {
 
 	json.Unmarshal(file, &data)
 
-	if _, err := os.Stat(key_file_path); err != nil {
-		os.MkdirAll(filepath.Dir(key_file_path), 0755)
-		fmt.Println("Put the key file in destination: " + key_file_path)
-	}
+//	key_file_path := filepath.Join(user, ".Server", "Key.key")
+//	if _, err := os.Stat(key_file_path); err != nil {
+//		os.MkdirAll(filepath.Dir(key_file_path), 0755)
+//		os.Create(key_file_path)
+//	}
+//
+//	key,err := os.ReadFile(key_file_path)
+//	if err != nil {
+//		panic(err)
+//	}
 
-	key_file,err := os.ReadFile(key_file_path)
-	if err != nil {
-		panic(err)
-	}
-
-	Cipher_block,err = aes.NewCipher([]byte(strings.TrimSpace(string(key_file))))
-	if err != nil {
-		fmt.Println("Couldnt make a cipher out of key file")
-		panic(err)
-	}
 
 
 	var ip string
@@ -68,6 +64,8 @@ func main() {
 		ip = data.Default
 	}
 	
+
+
 	var conn net.Conn
 	conn,err = net.Dial("tcp", ip + ":8080")
 	if err != nil {
@@ -82,6 +80,30 @@ func main() {
 		}
 	}
 
+	var key string
+	for {
+		fmt.Print("Enter the key: ")
+		fmt.Scan(&key)
+		if len(key) != 32 {
+			fmt.Print("Not a valid key, has to be 32 character long\n")
+		} else {
+			break
+		}
+	}
+
+	Cipher_block,err = aes.NewCipher([]byte(strings.TrimSpace(key)))
+	if err != nil {
+		fmt.Println("Couldnt make a cipher out of key")
+		panic(err)
+	}
+	
+	buf := make([]byte, 1024)
+	n,_ := conn.Read(buf)
+
+	string_to_send_back := decrypt(string(buf)[:n])
+	conn.Write([]byte(string_to_send_back))
+
+	time.Sleep(100*time.Millisecond)
 	if data.Username != "" {
 		conn.Write([]byte(encrypt("--USER:"+data.Username)))
 	} else {
@@ -99,7 +121,8 @@ func reader(conn net.Conn) {
 		buf := make([]byte, 1024)
 		_,err := conn.Read(buf)
 		if err != nil {
-			panic("%s closed connection\n" + conn.RemoteAddr().String())
+			fmt.Println("closed connection\n")
+			os.Exit(1)
 		}
 		fmt.Print(string(buf))
 	}
@@ -166,7 +189,8 @@ func encrypt(plaintext string) string {
 func decrypt(plaintext string) string {
 	str,err := base64.StdEncoding.DecodeString(plaintext)
 	if err != nil {
-		return ""
+		fmt.Println("Something went wrong when decoding")
+		panic(err)
 	}
 
 	dst := make([]byte, len(str))
@@ -193,12 +217,10 @@ func decrypt(plaintext string) string {
 		is_padded = false
 	}
 
-	dst_string := string(dst)
 
 	if is_padded {
-		dst_string = dst_string[:len(dst_string) - int(padded)]
+		dst = dst[:dst_length - int(padded)]
 	}
-
-	return dst_string
+	return string(dst)
 }
 

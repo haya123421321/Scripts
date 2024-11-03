@@ -5,10 +5,10 @@ import (
 	"crypto/cipher"
 	"encoding/base64"
 	"fmt"
+	"math/rand"
 	"net"
-	"os"
-	"path/filepath"
 	"strings"
+	"time"
 )
 
 
@@ -29,24 +29,33 @@ func main() {
 		panic(err)
 	}
 	
-	user,err := os.UserHomeDir()
-	if err != nil {
-		panic(err)
+//	user,err := os.UserHomeDir()
+//	if err != nil {
+//		panic(err)
+//	}
+
+//	key_file_path := filepath.Join(user, ".Server", "Key.key")
+//
+//	if _, err := os.Stat(key_file_path); err != nil {
+//		os.MkdirAll(filepath.Dir(key_file_path), 0755)
+//		fmt.Println("Missing a key with 32 characters in destination: " + key_file_path)
+//	}
+//
+//	key,err := os.ReadFile(key_file_path)
+//	if err != nil {
+//		panic(err)
+//	}
+
+	awailable_chars := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ123456789!@#$%^&*"
+	var key string
+	for i:=0;i<32;i++ {
+		r := rand.New(rand.NewSource(time.Now().UnixNano()))
+		randomInRange := r.Intn(len(awailable_chars))
+		key = key + string(awailable_chars[randomInRange])
 	}
+	fmt.Println("Key is: " + key)
 
-	key_file_path := filepath.Join(user, ".Server", "Key.key")
-
-	if _, err := os.Stat(key_file_path); err != nil {
-		os.MkdirAll(filepath.Dir(key_file_path), 0755)
-		fmt.Println("Missing a key with 32 characters in destination: " + key_file_path)
-	}
-
-	key_file,err := os.ReadFile(key_file_path)
-	if err != nil {
-		panic(err)
-	}
-
-	Cipher_block,err = aes.NewCipher([]byte(strings.TrimSpace(string(key_file))))
+	Cipher_block,err = aes.NewCipher([]byte(strings.TrimSpace(string(key))))
 	if err != nil {
 		fmt.Println("Couldnt make a cipher out of key file")
 		panic(err)
@@ -59,14 +68,37 @@ func main() {
 		if err != nil {
 			return
 		}
-		ip := strings.Split(conn.RemoteAddr().String(), ":")[0]
+		
+		// Auth
+		awailable_chars := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ123456789!@#$%^&*"
+		r := rand.New(rand.NewSource(time.Now().UnixNano()))
+		amount_characters := r.Intn(50) + 50
+
+		var str_to_decode string
+		for i:=0;i<amount_characters;i++ {
+			r := rand.New(rand.NewSource(time.Now().UnixNano()))
+			randomInRange := r.Intn(len(awailable_chars))
+			str_to_decode = str_to_decode + string(awailable_chars[randomInRange])
+		}
+		conn.Write([]byte(encrypt(str_to_decode)))
 
 		buf := make([]byte, 1024)
 		n,_ := conn.Read(buf)
 
-		var username string
+		recieved_code := string(buf)[:n]
 
-		user_name_split := strings.Split(decrypt(string(buf[:n])), ":")
+		ip := strings.Split(conn.RemoteAddr().String(), ":")[0]
+		if string(recieved_code) != str_to_decode {
+			fmt.Println(ip + " Failed auth")
+			conn.Close()
+			continue
+		}
+		
+		user_buf := make([]byte, 1024)
+		n,_ = conn.Read(user_buf)
+
+		var username string
+		user_name_split := strings.Split(decrypt(string(user_buf)[:n]), ":")
 		if user_name_split[0] == "--USER" {
 			if len(user_name_split) > 1 {
 				username = strings.Join(user_name_split[1:], ":")
@@ -76,7 +108,6 @@ func main() {
 		} else {
 			username = ip
 		}
-
 
 		Connections[ip] = connection_data{
 			Name: username,
@@ -166,9 +197,12 @@ func encrypt(plaintext string) string {
 	return base64.StdEncoding.EncodeToString(dst)
 }
 
+
 func decrypt(plaintext string) string {
 	str,err := base64.StdEncoding.DecodeString(plaintext)
 	if err != nil {
+		fmt.Println("Something went wrong when decoding")
+		fmt.Println(err)
 		return ""
 	}
 
@@ -196,12 +230,11 @@ func decrypt(plaintext string) string {
 		is_padded = false
 	}
 
-	dst_string := string(dst)
 
 	if is_padded {
-		dst_string = dst_string[:len(dst_string) - int(padded)]
+		dst = dst[:dst_length - int(padded)]
 	}
-
-	return dst_string
+	return string(dst)
 }
+
 
