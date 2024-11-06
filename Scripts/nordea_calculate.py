@@ -29,7 +29,9 @@ for file in nordea_files:
             kroner_index = text.index("Rentedato") + index
         except ValueError:
             print("Something wrong with " + file)
-        
+            index = 3
+            break
+
         try:
             kroner_no_strip = text[kroner_index].strip()
             if "DKK" not in kroner_no_strip:
@@ -37,17 +39,23 @@ for file in nordea_files:
                 continue
 
             kroner = text[kroner_index].strip("-DKK").strip().replace(",", ".")
+            date = text[kroner_index + 2]
+
             kroner_split = kroner.split(".")
 
             if len(kroner_split) > 1:
                 kroner = "".join(kroner_split[:-1]) + "." + kroner_split[-1]
 
             total += float(kroner)
-            print(file + ":", str(round(float(kroner), 2)) + "kr")
+            print(round(float(kroner), 2), " ", date," ", file)
             index = 3
             break
         except:
-            index += 1
-
+            if kroner_index > len(text):
+                print("Couldnt get information of: " + file)
+                index = 3
+                break
+            else:
+                index += 1
 
 print(f"Total: {round(total, 2)} kr")                                                 
