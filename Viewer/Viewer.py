@@ -50,19 +50,25 @@ def main_scroll(canvas, event):
     canvas.yview_scroll(direction, "units")
 
 def space_scroll(canvas, event, stop):
+    root.unbind("<KeyPress-space>")
+
     for _ in range(8):
         canvas.yview_scroll(1, "units")
         canvas.update()
         root.after(20)
 
+    root.bind("<KeyPress-space>", lambda event: space_scroll(canvas, event, True))
     images.show_next_image()
 
 def shift_space_scroll(canvas, event):
+    root.unbind("<Shift-space>")
+
     for _ in range(8):
         canvas.yview_scroll(-1, "units")
         canvas.update()
         root.after(20)
-
+    
+    root.bind("<Shift-space>", lambda event: shift_space_scroll(canvas, event))  
     images.show_next_image()
 
 def arrow_up_scroll(canvas, event):
