@@ -273,6 +273,7 @@ func main() {
 				} else if char == 13 {
 				url = mangas_url_found[choice]
 				if url == current_manga_url {
+					fmt.Print("\033[?47h")
 					fmt.Print("\033[" + strconv.Itoa(height / 2 - 4), ";" + strconv.Itoa(width / 2 - 12) + "H")
 					fmt.Print("┏" + strings.Repeat("━", 23) + "┓")
 					
@@ -283,6 +284,8 @@ func main() {
 	
 					fmt.Print("\033[?25h")
 					
+					var escaped bool
+					Chapters:
 					for {
 						fmt.Print("\033[" + strconv.Itoa(height / 2 - 3), ";" + strconv.Itoa(width / 2 - 11) + "H" + "\033[1mChapter: " + strings.Repeat(" ", 23 - len("Chapter: ")))
 						fmt.Print("\033[" + strconv.Itoa(height / 2 - 3), ";" + strconv.Itoa(width / 2 - 11 + len("Chapter: ")) + "H")
@@ -297,14 +300,27 @@ func main() {
 								Chapters = Chapters[:Chapters_Search_pos - 1] + Chapters[Chapters_Search_pos:]
 								Chapters_Search_pos = Chapters_Search_pos - 1
 							} else if char == 27 {
-								char,_ := tty.ReadRune()
-								if char == 91 {
-									char,_ := tty.ReadRune()
-									if char == 68 && Chapters_Search_pos > 0{
-										Chapters_Search_pos -= 1
-									} else if char == 67 && Chapters_Search_pos < len(Chapters){
-										Chapters_Search_pos += 1
+								var returned_char bool
+								var char rune
+								go func() {
+									char,_ = tty.ReadRune()
+									returned_char = true
+								}()
+
+								time.Sleep(10*time.Millisecond)
+								if returned_char == true {
+									if char == 91 {
+										char,_ := tty.ReadRune()
+										if char == 68 && Chapters_Search_pos > 0{
+											Chapters_Search_pos -= 1
+										} else if char == 67 && Chapters_Search_pos < len(Chapters){
+											Chapters_Search_pos += 1
+										}
 									}
+								} else {
+									fmt.Print("\033[?47l")
+									escaped = true
+									break Chapters
 								}	
 							} else {
 								Chapters = Chapters[:Chapters_Search_pos] + string(char) + Chapters[Chapters_Search_pos:]
@@ -340,8 +356,11 @@ func main() {
 							break
 						}
 					}
-
 					
+				if escaped == true {
+					continue
+				}
+
 				} else {
 					resp, err := http.Get(url)
 					if err != nil {
@@ -564,36 +583,70 @@ func print_manganato_info(doc *goquery.Document) {
 
 	fmt.Print("\033[2;" + strconv.Itoa(width/2 + 2) + "H")
 	fmt.Print("\033[1mTitle: \033[0m")
-	fmt.Print(title)
-
-	fmt.Print("\033[3;" + strconv.Itoa(width/2 + 2) + "H")
-	fmt.Print("\033[1mAuthor: \033[0m")
-	fmt.Print(author)
-
-	fmt.Print("\033[4;" + strconv.Itoa(width/2 + 2) + "H")
-	fmt.Print("\033[1mAlternative: \033[0m")
-	fmt.Print(alternative)
-
-	fmt.Print("\033[5;" + strconv.Itoa(width/2 + 2) + "H")
-	fmt.Print("\033[1mStatus: \033[0m")
-	fmt.Print(status)
-	
-	fmt.Print("\033[6;" + strconv.Itoa(width/2 + 2) + "H")
-	fmt.Print("\033[1mGenres: \033[0m")
-	fmt.Print(genres)
-	
-	fmt.Print("\033[8;" + strconv.Itoa(width/2 + 2) + "H")
-	fmt.Print("\033[1mDescrition: \033[0m")
-	fmt.Print("\033[9;" + strconv.Itoa(width/2 + 2) + "H")
-	
-	characters := strings.Trim(description, " ")
-	line := 9
-	for index,i := range characters {
-		if index  % (width/2 - 3) == 0 && index != 0 {
-			line += 1
-			fmt.Print("-\033[" + strconv.Itoa(line) + ";" + strconv.Itoa(width/2 + 2) + "H")
+	for index,i := range title {
+		if index  % ((width/2 - 3) - len("Title: ")) == 0 && index != 0 {
+			fmt.Print("\n\033[" + strconv.Itoa(width/2 + 2) + "G")
 		}
 		fmt.Print(string(i))
+		time.Sleep(10*time.Millisecond)
+	}
+
+	fmt.Print("\033[1B\033[" + strconv.Itoa(width/2 + 2) + "G")
+	fmt.Print("\033[1mAuthor: \033[0m")
+	for index,i := range author {
+		if index  % ((width/2 - 3) - len("Author: ")) == 0 && index != 0 {
+			fmt.Print("\n\033[" + strconv.Itoa(width/2 + 2) + "G")
+		}
+		fmt.Print(string(i))
+		time.Sleep(10*time.Millisecond)
+	}
+
+	fmt.Print("\033[1B\033[" + strconv.Itoa(width/2 + 2) + "G")
+	fmt.Print("\033[1mAlternative: \033[0m")
+	for index,i := range alternative {
+		if index  % ((width/2 - 3) - len("Alternative: ")) == 0 && index != 0 {
+			fmt.Print("\n\033[" + strconv.Itoa(width/2 + 2) + "G")
+		}
+		fmt.Print(string(i))
+		time.Sleep(10*time.Millisecond)
+	}
+
+	fmt.Print("\033[1B\033[" + strconv.Itoa(width/2 + 2) + "G")
+	fmt.Print("\033[1mStatus: \033[0m")
+	for index,i := range status {
+		if index  % ((width/2 - 3) - len("Status: ")) == 0 && index != 0 {
+			fmt.Print("\n\033[" + strconv.Itoa(width/2 + 2) + "G")
+		}
+		fmt.Print(string(i))
+		time.Sleep(10*time.Millisecond)
+	}
+	
+	fmt.Print("\033[1B\033[" + strconv.Itoa(width/2 + 2) + "G")
+	fmt.Print("\033[1mGenres: \033[0m")
+
+	for index,i := range genres {
+		if index  % ((width/2 - 3) - len("Genres: ")) == 0 && index != 0 {
+			fmt.Print("\n\033[" + strconv.Itoa(width/2 + 2) + "G")
+		}
+		fmt.Print(string(i))
+		time.Sleep(10*time.Millisecond)
+	}
+	
+	fmt.Print("\033[2B\033[" + strconv.Itoa(width/2 + 2) + "G")
+	fmt.Print("\033[1mDescrition: \033[0m")
+	fmt.Print("\033[1B\033[" + strconv.Itoa(width/2 + 2) + "G")
+	
+	description_split := strings.Split(strings.Trim(description, " "), " ")
+	
+	words_length := 0
+	for _,word := range description_split {
+		if (words_length + len(word)) > (width/2 - 3) {
+			fmt.Print("\n\033[" + strconv.Itoa(width/2 + 2) + "G")
+			words_length = 0
+		}
+		words_length += len(word + " ")
+		fmt.Print(word + " ")
+		time.Sleep(10*time.Millisecond)
 	}
 
 }
