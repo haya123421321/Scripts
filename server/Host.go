@@ -100,7 +100,7 @@ func main() {
 		var username string
 		user_name_split := strings.Split(decrypt(string(user_buf)[:n]), ":")
 		if user_name_split[0] == "--USER" {
-			if len(user_name_split) > 1 {
+			if len(user_name_split) > 2 {
 				username = strings.Join(user_name_split[1:], ":")
 			} else {
 				username = ip
