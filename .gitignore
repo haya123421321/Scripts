@@ -1,3 +1,4 @@
 .gitignore
 Viewer/mangas
 Viewer/data.json
+Anichecker/a.db
