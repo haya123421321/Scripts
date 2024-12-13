@@ -1,6 +1,7 @@
 #!/bin/bash
 
 Config="$(dirname "$0")/config.json"
+
 if [ ! -f $Config ];then
 	echo "{}" > $Config
 	echo "Config file created: $Config"
@@ -10,7 +11,7 @@ if [[ $(cat $Config) == "" ]];then
 	echo "{}" > $Config
 fi
 
-BackupUser=$(jq -r .User config.json)
+BackupUser=$(jq -r .User $Config)
 if [[ $BackupUser == "null" ]];then
 	echo "There are no backup user, you will need to add one"
 	read -p "Backup User: " New_user
@@ -98,7 +99,7 @@ else
 	cd "$BackupDirectory"
 	7z a Backup.zip $ToMakeBackup
 	
-	mount -m /dev/nvme0n1p1 Drive
+	mount -m /dev/nvme1n1p1 Drive
 	
 	if [ ! -d "Drive/Backups" ] ;then
 		mkdir -p "Drive/Backups"
