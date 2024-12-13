@@ -1,17 +1,17 @@
 #!/bin/bash
 
-Config="$(dirname "$0")/config.json"
+Config="$(dirname $(realpath "$0"))/config.json"
 
-if [ ! -f $Config ];then
-	echo "{}" > $Config
-	echo "Config file created: $Config"
+if [ ! -f "$Config" ];then
+	echo "{}" > "$Config"
+	echo "Config file created: "$Config""
 fi
 
-if [[ $(cat $Config) == "" ]];then
-	echo "{}" > $Config
+if [[ $(cat "$Config") == "" ]];then
+	echo "{}" > "$Config"
 fi
 
-BackupUser=$(jq -r .User $Config)
+BackupUser=$(jq -r .User "$Config")
 if [[ $BackupUser == "null" ]];then
 	echo "There are no backup user, you will need to add one"
 	read -p "Backup User: " New_user
@@ -48,7 +48,7 @@ if [[ $run == false ]];then
 		read -p "Option: " Option
 
 		if [[ "$Option" == 1 ]];then
-			jq_data=$(jq -r .User $Config)
+			jq_data=$(jq -r .User "$Config")
 			if [[ "$jq_data" == "null" ]];then
 				echo "No backup user"
 			else
@@ -57,7 +57,7 @@ if [[ $run == false ]];then
 		fi
 
 		if [[ "$Option" == 2 ]];then
-			jq_data=$(jq .Files $Config)
+			jq_data=$(jq .Files "$Config")
 			if [[ "$jq_data" == "null" ]];then
 				echo "No files in the Backup List"
 			else
@@ -66,7 +66,7 @@ if [[ $run == false ]];then
 		fi
 		
 		if [[ "$Option" == 3 ]];then
-			jq_data=$(jq .User $Config)
+			jq_data=$(jq .User "$Config")
 			echo "Current Backup User: $jq_data"
 			read -p "New Backup User: " New_user
 			temp="$(dirname "$0")/temp.json"
@@ -74,7 +74,7 @@ if [[ $run == false ]];then
 		fi
 
 		if [[ "$Option" == 4 ]];then 
-			jq_data=$(jq .Files $Config)
+			jq_data=$(jq .Files "$Config")
 			if [[ "$jq_data" == "null" ]];then
 				echo "No files right now"
 			else 
@@ -87,12 +87,25 @@ if [[ $run == false ]];then
 			jq ".Files |= .+ [\"$New_file\"]" "$Config" > "$temp" && mv "$temp" "$Config"
 			echo "Added: $New_file"
 		fi
+
+		if [[ "$Option" == 5 ]];then 
+			i=0
+			jq -r ".Files[]" "$Config" | while read -r line;do
+				echo "$i. $line"
+				i=$((i + 1))
+			done
+			read -p "Which file to remove, insert a index: " index
+			temp="$(dirname "$0")/temp.json"
+			deleted=$(jq ".Files[$index]" "$Config")
+			jq "del(.Files[$index])" "$Config" > "$temp" && mv "$temp" "$Config"
+			echo "Deleted: $deleted"
+		fi
 	done
 else
 	rm -r "$ToMakeBackup"
 	mkdir -p "$ToMakeBackup"
 
-	jq -r .Files[] $Config | while read line;do
+	jq -r .Files[] "$Config" | while read line;do
 		cp -r "$line" "$ToMakeBackup"
 	done
 
